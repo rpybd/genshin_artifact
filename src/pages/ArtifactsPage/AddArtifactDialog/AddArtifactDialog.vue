@@ -1,7 +1,7 @@
 <template>
     <el-dialog
         title="添加圣遗物"
-        :visible.sync="visible"
+        :visible="visible"
         width="80%"
         :before-close="onCancel"
     >
@@ -33,14 +33,14 @@
                         @click="level = star * 4"
                     ></el-button>
                 </div>
-                
+
                 <el-input-number
                     v-model="level"
                     :max="star * 4"
                     :min="0"
                     size="small"
                 ></el-input-number>
-                
+
             </el-col>
         </el-row>
 
@@ -73,7 +73,7 @@
                         @click="openHelp"
                     ></el-button>
                 </div>
-                
+
                 <select-artifact-normal-tag v-model="normalTags"></select-artifact-normal-tag>
             </el-col>
         </el-row>
@@ -227,9 +227,9 @@ export default {
                 this.$emit("confirm", result);
             }
         },
-        
+
         onCancel() {
-            this.$emit("close");
+            this.$emit("update:visible", false);
         },
 
         shuffleNormalTags() {

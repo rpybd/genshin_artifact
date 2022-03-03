@@ -1,9 +1,11 @@
-import {
+import scoreRatioConfig from './scoreRatioConfig';
+
+const {
     classTypes,
     elementalBonusMap,
     mainTagRatio,
     normalTagRatio,
-} from './scoreRatioConfig';
+} = scoreRatioConfig;
 
 function f() {
     return function(artifact) {
@@ -14,7 +16,7 @@ function f() {
         if (elementalBonusMap[mainTag]) {
             mainTag = elementalBonusMap[mainTag];
         }
-        
+
         const position = artifact.position;
         console.log(mainTag, position);
         let normalTags = [...artifact.normalTags];

@@ -1,7 +1,7 @@
 <template>
     <el-dialog
         title="导入json"
-        :visible.sync="visible"
+        :visible="visible"
         width="80%"
         :before-close="handleClose"
         @opened="handleOpened"
@@ -90,7 +90,7 @@ export default {
             let ele = this.$refs.field.$el;
             ele.ondrop = null;
 
-            this.$emit("close");
+            this.$emit("update:visible", false);
         },
 
         appendArtifacts() {
@@ -123,7 +123,7 @@ export default {
                 this.appendArtifacts();
                 // loading.close();
             }
-            
+
             this.$emit("close");
         },
 
@@ -139,10 +139,10 @@ export default {
                 // loading.close();
 
                 // this.$nextTick(() => {
-                    
+
                 // })
 
-                
+
             }
 
             this.$emit("close");

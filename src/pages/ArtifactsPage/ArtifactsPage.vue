@@ -2,26 +2,22 @@
     <div>
         <!-- new artifact dialog -->
         <add-artifact-dialog
-            :visible="newDialogVisible"
-            @close="newDialogVisible = false"
+            :visible.sync="newDialogVisible"
             @confirm="handleAddArtifact"
         ></add-artifact-dialog>
 
         <import-json-dialog
-            :visible="importJsonDialogVisible"
-            @close="importJsonDialogVisible = false"
+            :visible.sync="importJsonDialogVisible"
         >
         </import-json-dialog>
 
         <output-json-dialog
-            :visible="outputJsonDialogVisible"
-            @close="outputJsonDialogVisible = false"
+            :visible.sync="outputJsonDialogVisible"
         >
         </output-json-dialog>
 
         <edit-artifact-drawer
-            :visible="editArtifactDrawerVisible"
-            @close="editArtifactDrawerVisible = false"
+            :visible.sync="editArtifactDrawerVisible"
             :args="editArtifactArgs"
             ref="editDrawer"
         >
@@ -83,7 +79,7 @@
                     清空
                 </el-button>
             </el-popconfirm>
-            
+
             <el-button
                 size="mini"
                 icon="el-icon-unlock"

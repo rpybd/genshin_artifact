@@ -3,7 +3,7 @@ const fs = require("fs");
 const packageJson = fs.readFileSync("./package.json");
 const version = JSON.parse(packageJson).version || "no version";
 const webpack = require("webpack");
-const WorkerPlugin = require("worker-plugin");
+// const WorkerPlugin = require("worker-plugin");
 
 
 const BEIAN_CODE = "浙ICP备2021004987号";
@@ -65,19 +65,17 @@ module.exports = {
         },
         plugins: [
             new webpack.DefinePlugin({
-                "process.env": {
-                    VERSION: `"${version}"`,
-                    WEB_TITLE: `"${title}"`,
-                    NEED_BEIAN: `${needBeian}`,
-                    BEIAN_NUMBER: `"${BEIAN_CODE + '-' + beianNumber}"`,
-                    NEED_MIGRATE: `${needMigrate}`,
-                    ROUTE_MODE: `"${routeMode}"`,
-                    BUILD_DATE: `"${buildDate}"`,
-                }
+                "process.env.APP_VERSION": `"${version}"`,
+                "process.env.WEB_TITLE": `"${title}"`,
+                "process.env.NEED_BEIAN": `${needBeian}`,
+                "process.env.BEIAN_NUMBER": `"${BEIAN_CODE + '-' + beianNumber}"`,
+                "process.env.NEED_MIGRATE": `${needMigrate}`,
+                "process.env.ROUTE_MODE": `"${routeMode}"`,
+                "process.env.BUILD_DATE": `"${buildDate}"`,
             }),
-            new WorkerPlugin({
-                globalObject: "self",
-            }),
+            // new WorkerPlugin({
+            //     globalObject: "self",
+            // }),
         ],
         // entry: {
         //     "compute-worker": "./src/workers/compute.worker.js",

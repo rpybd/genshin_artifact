@@ -1,0 +1,19 @@
+{
+    "include": [
+        "./src/**/*"
+    ],
+    "compilerOptions": {
+        "baseUrl": "src",
+        "paths": {
+            "@/*": ["*"],
+            "@c/*": ["components/*"],
+            "@asset/*": ["assets/*"],
+            "@util/*": ["utils/*"],
+            "@alg/*": ["algorithms/*"],
+            "@page/*": ["pages/*"],
+            "@worker/*": ["workers/*"],
+            "@const/*": ["constants/*"],
+            "@enemy/*": ["enemies/*"],
+        }
+    }
+}

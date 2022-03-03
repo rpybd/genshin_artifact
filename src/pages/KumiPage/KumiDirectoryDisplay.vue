@@ -26,7 +26,7 @@
                     @click="handleNewKumi"
                 >新建套装<i class="el-icon-plus"></i></el-button>
             </div>
-            
+
             <div class="right">
                 <el-popconfirm
                     title="确定删除？"
@@ -39,7 +39,7 @@
                         slot="reference"
                     >删除收藏夹</el-button>
                 </el-popconfirm>
-                
+
             </div>
         </div>
 

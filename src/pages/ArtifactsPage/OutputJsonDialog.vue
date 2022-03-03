@@ -1,7 +1,7 @@
 <template>
     <el-dialog
         title="导出json"
-        :visible.sync="visible"
+        :visible="visible"
         width="80%"
         :before-close="handleClose"
     >
@@ -36,7 +36,7 @@ export default {
     },
     methods: {
         handleClose() {
-            this.$emit("close");
+            this.$emit("update:visible", false);
         },
 
         handleCopy() {

@@ -1,7 +1,7 @@
 <template>
     <el-drawer
         title="编辑词条"
-        :visible.sync="visible"
+        :visible="visible"
         direction="rtl"
         :before-close="handleCancel"
     >
@@ -32,14 +32,14 @@
                             @click="level = star * 4"
                         ></el-button>
                     </div>
-                    
+
                     <el-input-number
                         v-model="level"
                         :max="star * 4"
                         :min="0"
                         size="small"
                     ></el-input-number>
-                    
+
                 </el-col>
             </el-row>
         </div>
@@ -184,7 +184,7 @@ export default {
         },
 
         handleCancel() {
-            this.$emit("close");
+            this.$emit("update:visible", false);
         }
     },
     computed: {
@@ -215,7 +215,7 @@ export default {
     //         if (!vis) {
     //             return;
     //         }
-            
+
     //         let newArt = this.artifact;
     //         setInit(newArt);
     //     }
