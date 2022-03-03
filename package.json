@@ -5,14 +5,14 @@
   "scripts": {
     "serve": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service serve",
     "build": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service build",
+    "lint": "vue-cli-service lint",
     "build:1": "cross-env MONA_TITLE=原神圣遗物工具 MONA_NEED_BEIAN=true MONA_BEIAN_NUMBER=1 MONA_NEED_MIGRATE=true MONA_ROUTE_MODE=hash vue-cli-service build",
     "build:2": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=true MONA_BEIAN_NUMBER=2 MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=history vue-cli-service build",
-    "lint": "vue-cli-service lint",
+    "download-artifact": "node ./script/download_artifact.js",
     "inspect": "vue inspect > inspect.js",
     "myserve": "serve ./dist",
-    "pack": "tar -czvf dist.tar.gz ./dist",
     "optimize-png": "node ./script/optimize_png.js",
-    "download-artifact": "node ./script/download_artifact.js"
+    "pack": "tar -czvf dist.tar.gz ./dist"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.32",
@@ -26,6 +26,7 @@
     "is-electron": "^2.2.0",
     "katex": "^0.12.0",
     "object-hash": "^2.2.0",
+    "register-service-worker": "^1.7.1",
     "vue": "^2.6.11",
     "vue-axios": "^3.2.4",
     "vue-katex": "^0.5.0"
@@ -34,6 +35,7 @@
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-plugin-pwa": "~4.5.15",
     "@vue/cli-service": "~4.5.0",
     "babel-eslint": "^10.1.0",
     "babel-plugin-component": "^1.1.1",

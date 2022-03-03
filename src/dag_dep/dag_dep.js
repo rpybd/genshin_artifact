@@ -1,4 +1,4 @@
-import Vue from "vue";
+// import Vue from "vue";
 
 
 const depScope = {};
@@ -35,7 +35,7 @@ export default class DagDep {
     }
 
     get(name) {
-        value = this.dep[name];
+        const value = this.dep[name];
         return value();
     }
 }

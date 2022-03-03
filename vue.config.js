@@ -115,5 +115,24 @@ module.exports = {
     //                 .loader("babel-loader")
 
     // },
+    pwa: {
+        name: title,
+        // themeColor: '#4DBA87',
+        // msTileColor: '#000000',
+        // appleMobileWebAppCapable: 'yes',
+        // appleMobileWebAppStatusBarStyle: 'black',
+        // assetsVersion: '',
+        // manifestPath: 'manifest.json',
+        iconPaths: {
+          favicon32: 'favicon.ico',
+          favicon16: 'favicon.ico',
+          appleTouchIcon: 'favicon.ico',
+          maskIcon: 'favicon.ico',
+          msTileImage: 'favicon.ico'
+        },
+        // workboxOptions: {
+        //   importWorkboxFrom: 'local',
+        // }
+      },
     productionSourceMap: false,
 }
