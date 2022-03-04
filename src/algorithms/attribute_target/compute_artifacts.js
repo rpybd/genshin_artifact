@@ -302,7 +302,7 @@ function getNewAttribute(combo, parameters, name) {
     return getAttribute(getNewArts(combo, name, eff[name][3]), ...parameters);
 }
 
-function calcHowMuchBonusPerTag(candidate) {
+export function calcHowMuchBonusPerTag(candidate) {
     const { valueFunction, value: baseValue, parameters, combo } = candidate;
 
     const bonus_S =
