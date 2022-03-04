@@ -97,13 +97,13 @@ module.exports = {
         //         }
         //     ]
         // },
-        externals: {
-            vue: "Vue",
-            "vue-router": "VueRouter",
-            vuex: "Vuex",
-            "element-ui": "ELEMENT",
-            "vue-echarts": "VueECharts",
-        }
+        // externals: {
+        //     vue: "Vue",
+        //     "vue-router": "VueRouter",
+        //     vuex: "Vuex",
+        //     "element-ui": "ELEMENT",
+        //     "vue-echarts": "VueECharts",
+        // }
     },
     // chainWebpack: config => {
     //     config.module
