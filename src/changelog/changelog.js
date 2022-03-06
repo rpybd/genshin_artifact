@@ -446,5 +446,12 @@ export default [
         changes: [
             "添加八重神子、神乐之真意、证誓之明瞳"
         ]
+    },
+    {
+        time: "2022/3/7",
+        version: "4.16.0",
+        changes: [
+            "Arts Planner页面添加快快计算按钮"
+        ]
     }
 ]
