@@ -261,7 +261,7 @@ export default {
             return temp;
         },
 
-        doCompute(artifacts, veryBigConfigObject) {
+        doCompute(method, artifacts, veryBigConfigObject) {
             // let character = veryBigConfigObject.character;
             // let weapon = veryBigConfigObject.weapon;
             // let constraint = veryBigConfigObject.constraint;
@@ -279,6 +279,7 @@ export default {
             // this is a web worker wrapped by a promise
             this.configObject = veryBigConfigObject;
             let promise = compute(
+                method,
                 artifacts,
                 veryBigConfigObject
             ).then(({ record, error }) => {
@@ -301,7 +302,7 @@ export default {
 
             // record time
             timer(promise).then(time => {
-                console.log(`complete after ${time}ms`);
+                console.log(method, `complete after ${time}ms`);
             });
         },
 

@@ -36,7 +36,15 @@
             <div style="float: right">
                 <el-button
                     size="small"
-                    @click="startCalculating"
+                    @click="startCalculating('newComputeArtifacts')"
+                    type="primary"
+                >
+                    <i class="el-icon-cpu"></i>
+                    快快计算
+                </el-button>
+                <el-button
+                    size="small"
+                    @click="startCalculating('computeArtifacts')"
                     type="primary"
                 >
                     <i class="el-icon-cpu"></i>
@@ -172,8 +180,6 @@
 
                     <result-page
                         v-show="currentstep === 'result'"
-                        :calculating="calculating"
-                        :result-data="resultData"
                         ref="resultPage"
                     ></result-page>
 
@@ -437,7 +443,7 @@ export default {
          * all configs are ready,
          * start to compute
          */
-        startCalculating() {
+        startCalculating(method) {
             let configObject = this.getConfigObject();
 
             let rawArtifacts = deepCopy(this.$store.getters["artifacts/notOmittedArtifacts"]);
@@ -464,7 +470,7 @@ export default {
 
             let start = () => {
                 this.currentstep = "result";
-                this.$refs.resultPage.doCompute(filteredArtifacts, configObject);
+                this.$refs.resultPage.doCompute(method, filteredArtifacts, configObject);
             };
 
             console.log(iterCount);

@@ -1,7 +1,9 @@
 import computeArtifacts from "@alg/attribute_target/compute_artifacts";
+import newComputeArtifacts from "@alg/attribute_target/new_compute_artifacts";
 
 const calcs = {
     computeArtifacts,
+    newComputeArtifacts,
 };
 
 self.addEventListener("message", event => {

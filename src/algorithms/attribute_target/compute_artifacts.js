@@ -8,7 +8,7 @@ import artifactEff from "@const/artifact_eff";
 
 const RECORD_COUNT = 5;
 
-function getArtifactsSetInfo(arts) {
+export function getArtifactsSetInfo(arts) {
     let temp = {};
     for (let i of arts) {
         if (i) {
@@ -23,7 +23,7 @@ function getArtifactsSetInfo(arts) {
     return temp;
 }
 
-function checkAttribute(config, attribute) {
+export function checkAttribute(config, attribute) {
     let min = config.constraintAttributeMin;
 
     if (attribute.attack() < min.attack) {
@@ -203,7 +203,7 @@ function computeArtifacts(artifacts, configObject) {
                                 value,
                                 combo: [flower, feather, sand, cup, head],
                                 attribute,
-                                valueFunction,
+                                valueFunction,  //! May have bug: variable `context` in the closure will change
                                 parameters: [c, w, buffs, artifactsConfig],
                             });
                             if (maxRecord.length === RECORD_COUNT) {
