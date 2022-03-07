@@ -1,11 +1,11 @@
 {
   "name": "genshin_artifacts",
-  "version": "4.16.0",
+  "version": "4.16.1",
   "private": true,
   "scripts": {
     "serve": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service serve",
     "build": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service build",
-    "github-build": "cross-env PublicPath=/genshin_artifact/ MONA_TITLE=莫娜占卜铺·仿 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service build",
+    "github-build": "cross-env OUTPUT_DIR=docs PUBLIC_PATH=/genshin_artifact/ MONA_TITLE=莫娜占卜铺·仿 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service build",
     "lint": "vue-cli-service lint",
     "build:1": "cross-env MONA_TITLE=原神圣遗物工具 MONA_NEED_BEIAN=true MONA_BEIAN_NUMBER=1 MONA_NEED_MIGRATE=true MONA_ROUTE_MODE=hash vue-cli-service build",
     "build:2": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=true MONA_BEIAN_NUMBER=2 MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=history vue-cli-service build",
@@ -20,7 +20,6 @@
     "@fortawesome/free-brands-svg-icons": "^5.15.1",
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/vue-fontawesome": "^2.0.0",
-    "axios": "^0.21.1",
     "core-js": "^3.6.5",
     "echarts": "^5.3.0",
     "element-ui": "^2.14.0",
@@ -30,9 +29,10 @@
     "object-hash": "^2.2.0",
     "register-service-worker": "^1.7.1",
     "vue": "^2.6.11",
-    "vue-axios": "^3.2.4",
     "vue-echarts": "^6.0.2",
-    "vue-katex": "^0.5.0"
+    "vue-katex": "^0.5.0",
+    "vue-router": "^3.5.3",
+    "vuex": "^3.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
@@ -43,6 +43,7 @@
     "@vue/cli-plugin-pwa": "~5.0.1",
     "@vue/cli-service": "~5.0.1",
     "@vue/composition-api": "^1.4.9",
+    "axios": "^0.26.0",
     "babel-eslint": "^10.1.0",
     "babel-plugin-component": "^1.1.1",
     "cross-env": "^7.0.3",
@@ -53,11 +54,7 @@
     "sass": "^1.32.10",
     "sass-loader": "^10.1.1",
     "sharp": "^0.29.3",
-    "vue-router": "^3.4.8",
-    "vue-template-compiler": "^2.6.11",
-    "vuex": "^3.5.1",
-    "worker-loader": "^3.0.8",
-    "worker-plugin": "^5.0.0"
+    "vue-template-compiler": "^2.6.11"
   },
   "eslintConfig": {
     "root": true,

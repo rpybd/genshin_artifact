@@ -48,7 +48,8 @@ let now = new Date();
 let buildDate = now.toString();
 
 module.exports = {
-    publicPath: process.env.PublicPath || '/',
+    publicPath: process.env.PUBLIC_PATH || '/',
+    outputDir: process.env.OUTPUT_DIR || 'dist',
     configureWebpack: {
         resolve: {
             alias: {
