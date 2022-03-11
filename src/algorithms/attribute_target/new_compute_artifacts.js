@@ -4,10 +4,11 @@ import targetFunctionsFunc from "@asset/target_functions/func";
 import createFilterFunction from "./create_filter_function";
 // import applyBuffs from "./apply_buffs";
 import { getAttribute } from "@util/attribute";
-// import artifactEff from "@const/artifact_eff";
+import artifactEff from "@const/artifact_eff";
 import positions from "@const/positions";
 import oldCompute, { calcHowMuchBonusPerTag, checkAttribute, getArtifactsSetInfo } from './compute_artifacts.js';
 
+const EMPTY_SET_NAME = 'prayersForWisdom';  // TODO: replace it with real empty one
 const RECORD_COUNT = 5;
 
 function genPositionPermutation() {
@@ -148,7 +149,7 @@ function getAllSetNames(artifacts) {
     return Array.from(new Set(allArts.map(a => a.setName)));
 }
 
-function partitionArtifactsByMainTag(artifacts) {
+function partitionArtifactsByMainTagAndSet(artifacts) {
     const result = {};
     for (const pos of positions) {
         const posResult = {};
@@ -158,6 +159,33 @@ function partitionArtifactsByMainTag(artifacts) {
             const setName = art.setName;
             (tagResult[setName] ??= []).push(art);
             // (tagResult[null] ??= []).push(art);
+        }
+        result[pos] = posResult;
+    }
+    return result;
+}
+
+function partitionArtifactsByMainTagAndTag(artifacts) {
+    const tagThreshold = {};
+    for (const tag in artifactEff['5']) {
+        tagThreshold[tag] = artifactEff['5'][tag][1] * 4;
+    }
+    const result = {};
+    for (const pos of positions) {
+        const tags = {};
+        for (const art of artifacts[pos]) {
+            const mainTag = art.mainTag.name;
+            const tagResult = (tags[mainTag] ??= []);
+            tagResult.push(art);
+        }
+        const posResult = {};
+        for (const mainTag in tags) {
+            const mainTagResult = {};
+            for (const art of tags[mainTag]) {
+                const tag = art.normalTags.find(tag => tag.value >= tagThreshold[tag.name]);
+                (mainTagResult[tag?.name ?? ''] ??= []).push(art);
+            }
+            posResult[mainTag] = mainTagResult;
         }
         result[pos] = posResult;
     }
@@ -176,7 +204,7 @@ function genEmptyArtifact(position, mainTag, setName) {
         normalTags: [],
         omit: true,
         position,
-        setName: setName ?? 'prayersForWisdom',  // TODO: replace it with real empty one
+        setName: setName ?? EMPTY_SET_NAME,
         star: 5
     };
 }
@@ -198,17 +226,17 @@ function mergeIdeal(dst, src) {
     }
 }
 
-function getIdealArtifacts(groupArts) {
+function getIdealArtifacts(groupSetArts, isSetName) {
     const result = {};
     for (const pos of positions) {
         const posResult = {};
-        const posArts = groupArts[pos];
+        const posArts = groupSetArts[pos];
         for (const mainTag in posArts) {
             const posMainTagResult = {};
             const posMainTagArts = posArts[mainTag];
             const freeIdealArt = genEmptyArtifact(pos, mainTag, null);
             for (const setName in posMainTagArts) {
-                const idealArt = genEmptyArtifact(pos, mainTag, setName);
+                const idealArt = genEmptyArtifact(pos, mainTag, isSetName ? setName : null);
                 for (const art of posMainTagArts[setName]) {
                     mergeIdeal(idealArt, art);
                     mergeIdeal(freeIdealArt, art);
@@ -286,12 +314,12 @@ class ResultRecorder {
 }
 
 function doEnumerate(filteredArts, originIdealArts, resultRecorder) {
-    // console.log('doEnumerate', filteredArts, idealArts);
-    const idealArts = Object.assign({}, originIdealArts);
+    // console.log('doEnumerate', filteredArts, idealSetArts);
+    const idealSetArts = Object.assign({}, originIdealArts);
     for (const pos of positions) {
         const setNames = Object.keys(filteredArts[pos]);
         if (setNames.length === 1) {
-            idealArts[pos] = {
+            idealSetArts[pos] = {
                 ...originIdealArts[pos],
                 [null]: originIdealArts[pos][setNames[0]],
             };
@@ -313,11 +341,11 @@ function doEnumerate(filteredArts, originIdealArts, resultRecorder) {
 
     for (const sn1 in filteredArts[pos1]) {
         const arts10 = {
-            [pos1]: idealArts[pos1][sn1],
-            [pos2]: idealArts[pos2][null],
-            [pos3]: idealArts[pos3][null],
-            [pos4]: idealArts[pos4][null],
-            [pos5]: idealArts[pos5][null],
+            [pos1]: idealSetArts[pos1][sn1],
+            [pos2]: idealSetArts[pos2][null],
+            [pos3]: idealSetArts[pos3][null],
+            [pos4]: idealSetArts[pos4][null],
+            [pos5]: idealSetArts[pos5][null],
         };
         if (!resultRecorder.checkHope(arts10)) {
             continue;
@@ -334,7 +362,7 @@ function doEnumerate(filteredArts, originIdealArts, resultRecorder) {
             for (const sn2 in filteredArts[pos2]) {
                 const arts20 = {
                     ...arts11,
-                    [pos2]: idealArts[pos2][sn2],
+                    [pos2]: idealSetArts[pos2][sn2],
                 };
                 if (!resultRecorder.checkHope(arts20)) {
                     continue;
@@ -351,7 +379,7 @@ function doEnumerate(filteredArts, originIdealArts, resultRecorder) {
                     for (const sn3 in filteredArts[pos3]) {
                         const arts30 = {
                             ...arts21,
-                            [pos3]: idealArts[pos3][sn3],
+                            [pos3]: idealSetArts[pos3][sn3],
                         };
                         if (!resultRecorder.checkHope(arts30)) {
                             continue;
@@ -368,7 +396,7 @@ function doEnumerate(filteredArts, originIdealArts, resultRecorder) {
                             for (const sn4 in filteredArts[pos4]) {
                                 const arts40 = {
                                     ...arts31,
-                                    [pos4]: idealArts[pos4][sn4],
+                                    [pos4]: idealSetArts[pos4][sn4],
                                 };
                                 if (!resultRecorder.checkHope(arts40)) {
                                     continue;
@@ -385,7 +413,7 @@ function doEnumerate(filteredArts, originIdealArts, resultRecorder) {
                                     for (const sn5 in filteredArts[pos5]) {
                                         const arts50 = {
                                             ...arts41,
-                                            [pos5]: idealArts[pos5][sn5],
+                                            [pos5]: idealSetArts[pos5][sn5],
                                         };
                                         if (!resultRecorder.checkHope(arts50)) {
                                             continue;
@@ -396,7 +424,7 @@ function doEnumerate(filteredArts, originIdealArts, resultRecorder) {
                                                 [pos5]: art5,
                                             };
                                             resultRecorder.push(arts51);
-                                            // console.log('doEnumerate', filteredArts, idealArts);
+                                            // console.log('doEnumerate', filteredArts, idealSetArts);
                                             // console.log(posOrder);
                                         }
                                     }
@@ -410,77 +438,93 @@ function doEnumerate(filteredArts, originIdealArts, resultRecorder) {
     }
 }
 
-function do4(groupArts, idealArts, resultRecorder, allSetNames) {
-    const flowerMainTag = Object.keys(groupArts.flower)[0];
-    const featherMainTag = Object.keys(groupArts.feather)[0];
-    for (const sandMainTag in groupArts.sand) {
-        for (const cupMainTag in groupArts.cup) {
-            for (const headMainTag in groupArts.head) {
-                const tagGroupArts = {
-                    flower: groupArts.flower[flowerMainTag],
-                    feather: groupArts.feather[featherMainTag],
-                    sand: groupArts.sand[sandMainTag],
-                    cup: groupArts.cup[cupMainTag],
-                    head: groupArts.head[headMainTag],
+function do4(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames) {
+    console.time('do4');
+    const flowerMainTag = Object.keys(groupSetArts.flower)[0];
+    const featherMainTag = Object.keys(groupSetArts.feather)[0];
+    for (const sandMainTag in groupSetArts.sand) {
+        for (const cupMainTag in groupSetArts.cup) {
+            for (const headMainTag in groupSetArts.head) {
+                const mTagSetArts = {
+                    flower: groupSetArts.flower[flowerMainTag],
+                    feather: groupSetArts.feather[featherMainTag],
+                    sand: groupSetArts.sand[sandMainTag],
+                    cup: groupSetArts.cup[cupMainTag],
+                    head: groupSetArts.head[headMainTag],
+                };
+                const mTagSetIdealArts = {
+                    flower: idealSetArts.flower[flowerMainTag],
+                    feather: idealSetArts.feather[featherMainTag],
+                    sand: idealSetArts.sand[sandMainTag],
+                    cup: idealSetArts.cup[cupMainTag],
+                    head: idealSetArts.head[headMainTag],
+                };
+                const mTagTagArts = {
+                    flower: groupTagArts.flower[flowerMainTag],
+                    feather: groupTagArts.feather[featherMainTag],
+                    sand: groupTagArts.sand[sandMainTag],
+                    cup: groupTagArts.cup[cupMainTag],
+                    head: groupTagArts.head[headMainTag],
+                };
+                const mTagTagIdealArts = {
+                    flower: idealTagArts.flower[flowerMainTag],
+                    feather: idealTagArts.feather[featherMainTag],
+                    sand: idealTagArts.sand[sandMainTag],
+                    cup: idealTagArts.cup[cupMainTag],
+                    head: idealTagArts.head[headMainTag],
                 };
 
-                const tagIdealArts = {
-                    flower: idealArts.flower[flowerMainTag],
-                    feather: idealArts.feather[featherMainTag],
-                    sand: idealArts.sand[sandMainTag],
-                    cup: idealArts.cup[cupMainTag],
-                    head: idealArts.head[headMainTag],
-                };
-
-                // console.log(sandMainTag, ' ', cupMainTag, ' ', headMainTag);
-                // console.log(tagGroupArts);
-                // console.log(tagIdealArts);
-
-                // 4
                 for (const setName of allSetNames) {
                     // console.log('set4 ', setName);
                     const setArts = {}, setIdealArts = {};
                     for (const pos of positions) {
-                        setArts[pos] = { [setName]: tagGroupArts[pos][setName] };
-                        setIdealArts[pos] = tagIdealArts[pos][setName];
+                        setArts[pos] = { [setName]: mTagSetArts[pos][setName] };
+                        setIdealArts[pos] = mTagSetIdealArts[pos][setName];
                     }
                     for (const freePosi of positions) {
                         const arts = Object.assign({}, setIdealArts);
-                        arts[freePosi] = tagIdealArts[freePosi][null];
+                        arts[freePosi] = mTagSetIdealArts[freePosi][null];
                         // console.log('freePosi ', freePosi, arts);
                         if (!resultRecorder.checkHope(arts)) {
                             continue;
                         }
                         const filteredArts = Object.assign({}, setArts);
-                        filteredArts[freePosi] = tagGroupArts[freePosi];
-                        doEnumerate(filteredArts, tagIdealArts, resultRecorder);
+                        // filteredArts[freePosi] = mTagSetArts[freePosi];
+                        // doEnumerate(filteredArts, mTagSetIdealArts, resultRecorder);
+                        filteredArts[freePosi] = mTagTagArts[freePosi];
+                        const filteredIdealArts = Object.assign({}, mTagSetIdealArts);
+                        filteredIdealArts[freePosi] = mTagTagIdealArts[freePosi];
+                        doEnumerate(filteredArts, filteredIdealArts, resultRecorder);
                     }
                 }
             }
         }
     }
+    console.timeEnd('do4');
+    console.log(resultRecorder.maxRecord);
 }
 
-function do22(groupArts, idealArts, resultRecorder, allSetNames, fixedSetName = null) {
-    const flowerMainTag = Object.keys(groupArts.flower)[0];
-    const featherMainTag = Object.keys(groupArts.feather)[0];
-    for (const sandMainTag in groupArts.sand) {
-        for (const cupMainTag in groupArts.cup) {
-            for (const headMainTag in groupArts.head) {
-                const tagGroupArts = {
-                    flower: groupArts.flower[flowerMainTag],
-                    feather: groupArts.feather[featherMainTag],
-                    sand: groupArts.sand[sandMainTag],
-                    cup: groupArts.cup[cupMainTag],
-                    head: groupArts.head[headMainTag],
+function do22(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames, fixedSetName = null) {
+    console.time('do22');
+    const flowerMainTag = Object.keys(groupSetArts.flower)[0];
+    const featherMainTag = Object.keys(groupSetArts.feather)[0];
+    for (const sandMainTag in groupSetArts.sand) {
+        for (const cupMainTag in groupSetArts.cup) {
+            for (const headMainTag in groupSetArts.head) {
+                const mTagSetArts = {
+                    flower: groupSetArts.flower[flowerMainTag],
+                    feather: groupSetArts.feather[featherMainTag],
+                    sand: groupSetArts.sand[sandMainTag],
+                    cup: groupSetArts.cup[cupMainTag],
+                    head: groupSetArts.head[headMainTag],
                 };
 
-                const tagIdealArts = {
-                    flower: idealArts.flower[flowerMainTag],
-                    feather: idealArts.feather[featherMainTag],
-                    sand: idealArts.sand[sandMainTag],
-                    cup: idealArts.cup[cupMainTag],
-                    head: idealArts.head[headMainTag],
+                const mTagSetIdealArts = {
+                    flower: idealSetArts.flower[flowerMainTag],
+                    feather: idealSetArts.feather[featherMainTag],
+                    sand: idealSetArts.sand[sandMainTag],
+                    cup: idealSetArts.cup[cupMainTag],
+                    head: idealSetArts.head[headMainTag],
                 };
 
                 // 2 + 2
@@ -495,10 +539,10 @@ function do22(groupArts, idealArts, resultRecorder, allSetNames, fixedSetName = 
                     // console.log('set2+? ', setName1);
                     for (const [[pos1, pos2], subPos] of POS_PERM) {
                         const arts = allDoubleArts.slice();
-                        arts[i] = tagIdealArts[pos1][setName1];
-                        arts[i + allSetNames.length] = tagIdealArts[pos2][setName1];
+                        arts[i] = mTagSetIdealArts[pos1][setName1];
+                        arts[i + allSetNames.length] = mTagSetIdealArts[pos2][setName1];
                         for (const pos of subPos[0]) {
-                            arts.push(tagIdealArts[pos][null]);
+                            arts.push(mTagSetIdealArts[pos][null]);
                         }
                         if (!resultRecorder.checkHope(arts)) {
                             continue;
@@ -509,11 +553,11 @@ function do22(groupArts, idealArts, resultRecorder, allSetNames, fixedSetName = 
                             // console.log('set2+2 ', setName1, ' ', setName2);
                             for (const [pos3, pos4, pos5] of subPos) {
                                 const arts = {
-                                    [pos1]: tagIdealArts[pos1][setName1],
-                                    [pos2]: tagIdealArts[pos2][setName1],
-                                    [pos3]: tagIdealArts[pos3][setName2],
-                                    [pos4]: tagIdealArts[pos4][setName2],
-                                    [pos5]: tagIdealArts[pos5][null],
+                                    [pos1]: mTagSetIdealArts[pos1][setName1],
+                                    [pos2]: mTagSetIdealArts[pos2][setName1],
+                                    [pos3]: mTagSetIdealArts[pos3][setName2],
+                                    [pos4]: mTagSetIdealArts[pos4][setName2],
+                                    [pos5]: mTagSetIdealArts[pos5][null],
                                 };
                                 if (!resultRecorder.checkHope(arts)) {
                                     continue;
@@ -521,13 +565,13 @@ function do22(groupArts, idealArts, resultRecorder, allSetNames, fixedSetName = 
                                 // console.log('set2 [%s, %s, %s, %s, %s]', pos1, pos2, pos3, pos4, pos5, arts);
 
                                 const filteredArts = {
-                                    [pos1]: { [setName1]: tagGroupArts[pos1][setName1] },
-                                    [pos2]: { [setName1]: tagGroupArts[pos2][setName1] },
-                                    [pos3]: { [setName2]: tagGroupArts[pos3][setName2] },
-                                    [pos4]: { [setName2]: tagGroupArts[pos4][setName2] },
-                                    [pos5]: tagGroupArts[pos5],
+                                    [pos1]: { [setName1]: mTagSetArts[pos1][setName1] },
+                                    [pos2]: { [setName1]: mTagSetArts[pos2][setName1] },
+                                    [pos3]: { [setName2]: mTagSetArts[pos3][setName2] },
+                                    [pos4]: { [setName2]: mTagSetArts[pos4][setName2] },
+                                    [pos5]: mTagSetArts[pos5],
                                 };
-                                doEnumerate(filteredArts, tagIdealArts, resultRecorder);
+                                doEnumerate(filteredArts, mTagSetIdealArts, resultRecorder);
                             }
                         }
                     }
@@ -535,28 +579,30 @@ function do22(groupArts, idealArts, resultRecorder, allSetNames, fixedSetName = 
             }
         }
     }
+    console.timeEnd('do22');
 }
 
-function do2(groupArts, idealArts, resultRecorder, allSetNames) {
-    const flowerMainTag = Object.keys(groupArts.flower)[0];
-    const featherMainTag = Object.keys(groupArts.feather)[0];
-    for (const sandMainTag in groupArts.sand) {
-        for (const cupMainTag in groupArts.cup) {
-            for (const headMainTag in groupArts.head) {
-                const tagGroupArts = {
-                    flower: groupArts.flower[flowerMainTag],
-                    feather: groupArts.feather[featherMainTag],
-                    sand: groupArts.sand[sandMainTag],
-                    cup: groupArts.cup[cupMainTag],
-                    head: groupArts.head[headMainTag],
+function do2(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames) {
+    console.time('do2');
+    const flowerMainTag = Object.keys(groupSetArts.flower)[0];
+    const featherMainTag = Object.keys(groupSetArts.feather)[0];
+    for (const sandMainTag in groupSetArts.sand) {
+        for (const cupMainTag in groupSetArts.cup) {
+            for (const headMainTag in groupSetArts.head) {
+                const mTagSetArts = {
+                    flower: groupSetArts.flower[flowerMainTag],
+                    feather: groupSetArts.feather[featherMainTag],
+                    sand: groupSetArts.sand[sandMainTag],
+                    cup: groupSetArts.cup[cupMainTag],
+                    head: groupSetArts.head[headMainTag],
                 };
 
-                const tagIdealArts = {
-                    flower: idealArts.flower[flowerMainTag],
-                    feather: idealArts.feather[featherMainTag],
-                    sand: idealArts.sand[sandMainTag],
-                    cup: idealArts.cup[cupMainTag],
-                    head: idealArts.head[headMainTag],
+                const mTagSetIdealArts = {
+                    flower: idealSetArts.flower[flowerMainTag],
+                    feather: idealSetArts.feather[featherMainTag],
+                    sand: idealSetArts.sand[sandMainTag],
+                    cup: idealSetArts.cup[cupMainTag],
+                    head: idealSetArts.head[headMainTag],
                 };
 
                 // 2
@@ -566,57 +612,60 @@ function do2(groupArts, idealArts, resultRecorder, allSetNames) {
                     for (const [[pos1, pos2], subPos] of POS_PERM) {
                         const [pos3, pos4, pos5] = subPos[0];
                         const arts = {
-                            [pos1]: tagIdealArts[pos1][setName1],
-                            [pos2]: tagIdealArts[pos2][setName1],
-                            [pos3]: tagIdealArts[pos3][null],
-                            [pos4]: tagIdealArts[pos4][null],
-                            [pos5]: tagIdealArts[pos5][null],
+                            [pos1]: mTagSetIdealArts[pos1][setName1],
+                            [pos2]: mTagSetIdealArts[pos2][setName1],
+                            [pos3]: mTagSetIdealArts[pos3][null],
+                            [pos4]: mTagSetIdealArts[pos4][null],
+                            [pos5]: mTagSetIdealArts[pos5][null],
                         };
                         if (!resultRecorder.checkHope(arts)) {
                             continue;
                         }
 
                         const filteredArts = {
-                            [pos1]: { [setName1]: tagGroupArts[pos1][setName1] },
-                            [pos2]: { [setName1]: tagGroupArts[pos2][setName1] },
-                            [pos3]: tagGroupArts[pos3],
-                            [pos4]: tagGroupArts[pos4],
-                            [pos5]: tagGroupArts[pos5],
+                            [pos1]: { [setName1]: mTagSetArts[pos1][setName1] },
+                            [pos2]: { [setName1]: mTagSetArts[pos2][setName1] },
+                            [pos3]: mTagSetArts[pos3],
+                            [pos4]: mTagSetArts[pos4],
+                            [pos5]: mTagSetArts[pos5],
                         };
-                        doEnumerate(filteredArts, tagIdealArts, resultRecorder);
+                        doEnumerate(filteredArts, mTagSetIdealArts, resultRecorder);
                     }
                 }
             }
         }
     }
+    console.timeEnd('do2');
 }
 
-function doAny(groupArts, idealArts, resultRecorder) {
-    const flowerMainTag = Object.keys(groupArts.flower)[0];
-    const featherMainTag = Object.keys(groupArts.feather)[0];
-    for (const sandMainTag in groupArts.sand) {
-        for (const cupMainTag in groupArts.cup) {
-            for (const headMainTag in groupArts.head) {
-                const tagGroupArts = {
-                    flower: groupArts.flower[flowerMainTag],
-                    feather: groupArts.feather[featherMainTag],
-                    sand: groupArts.sand[sandMainTag],
-                    cup: groupArts.cup[cupMainTag],
-                    head: groupArts.head[headMainTag],
+function doAny(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder) {
+    console.time('doAny');
+    const flowerMainTag = Object.keys(groupSetArts.flower)[0];
+    const featherMainTag = Object.keys(groupSetArts.feather)[0];
+    for (const sandMainTag in groupSetArts.sand) {
+        for (const cupMainTag in groupSetArts.cup) {
+            for (const headMainTag in groupSetArts.head) {
+                const mTagSetArts = {
+                    flower: groupSetArts.flower[flowerMainTag],
+                    feather: groupSetArts.feather[featherMainTag],
+                    sand: groupSetArts.sand[sandMainTag],
+                    cup: groupSetArts.cup[cupMainTag],
+                    head: groupSetArts.head[headMainTag],
                 };
 
-                const tagIdealArts = {
-                    flower: idealArts.flower[flowerMainTag],
-                    feather: idealArts.feather[featherMainTag],
-                    sand: idealArts.sand[sandMainTag],
-                    cup: idealArts.cup[cupMainTag],
-                    head: idealArts.head[headMainTag],
+                const mTagSetIdealArts = {
+                    flower: idealSetArts.flower[flowerMainTag],
+                    feather: idealSetArts.feather[featherMainTag],
+                    sand: idealSetArts.sand[sandMainTag],
+                    cup: idealSetArts.cup[cupMainTag],
+                    head: idealSetArts.head[headMainTag],
                 };
 
-                doEnumerate(tagGroupArts, tagIdealArts, resultRecorder);
+                doEnumerate(mTagSetArts, mTagSetIdealArts, resultRecorder);
             }
         }
     }
+    console.timeEnd('doAny');
 }
 
 export default function computeArtifacts(artifacts, configObject) {
@@ -631,32 +680,35 @@ export default function computeArtifacts(artifacts, configObject) {
 
     let allSetNames = getAllSetNames(artifacts);
     const oldAllSetNames = allSetNames;
-    const groupArts = partitionArtifactsByMainTag(artifacts);
-    const idealArts = getIdealArtifacts(groupArts);
+    const groupSetArts = partitionArtifactsByMainTagAndSet(artifacts);
+    const idealSetArts = getIdealArtifacts(groupSetArts, true);
+
+    const groupTagArts = partitionArtifactsByMainTagAndTag(artifacts);
+    const idealTagArts = getIdealArtifacts(groupTagArts, false);
 
     const resultRecorder = new ResultRecorder(valueFunction);
 
     const setConfig = configObject.constraint.constraintSet;
     switch (setConfig.mode) {
     case 'any':
-        do4(groupArts, idealArts, resultRecorder, allSetNames);
-        do22(groupArts, idealArts, resultRecorder, allSetNames);
-        do2(groupArts, idealArts, resultRecorder, allSetNames);
-        doAny(groupArts, idealArts, resultRecorder);
+        do4(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames);
+        do22(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames);
+        do2(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames);
+        doAny(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder);
         break;
     case '2':
         allSetNames = [setConfig.setName1];
-        do4(groupArts, idealArts, resultRecorder, allSetNames);
-        do22(groupArts, idealArts, resultRecorder, oldAllSetNames, setConfig.setName1);
-        do2(groupArts, idealArts, resultRecorder, allSetNames);
+        do4(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames);
+        do22(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, oldAllSetNames, setConfig.setName1);
+        do2(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames);
         break;
     case '22':
         allSetNames = [setConfig.setName2, setConfig.setName3];
-        do22(groupArts, idealArts, resultRecorder, allSetNames);
+        do22(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames);
         break;
     case '4':
         allSetNames = [setConfig.setName4];
-        do4(groupArts, idealArts, resultRecorder, allSetNames);
+        do4(groupSetArts, idealSetArts, groupTagArts, idealTagArts, resultRecorder, allSetNames);
         break;
     }
 
