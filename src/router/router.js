@@ -62,6 +62,7 @@ const FAQPage = () => import(/* webpackChunkName: "help-page" */ "@page/helps/FA
 const ExportToolPage = () => import(/* webpackChunkName: "help-page" */ "@page/helps/ExportToolPage");
 // const ArtifactsStatisticsPage = () => import(/* webpackChunkName: "artifacts-statistics-page" */ "@page/ArtifactsStatisticsPage");
 const KumiPage = () => import (/* webpackChunkName: "kumi-page" */ "@page/KumiPage");
+const AccountPage = () => import (/* webpackChunkName: "account-page" */ "@page/AccountPage");
 
 
 const webName = process.env.WEB_TITLE;
@@ -73,6 +74,13 @@ const routes = [
         meta: {
             title: "整队优化 | " + webName,
             keepAlive: true,
+        }
+    },
+    {
+        path: "/accounts",
+        component: AccountPage,
+        meta: {
+            title: "账号 | " + webName,
         }
     },
     {

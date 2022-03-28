@@ -1734,6 +1734,15 @@ export default {
             immediate: true,
             deep: true,
         },
+
+        "$store.state.accounts.currentAccountId"() {
+            this.constraintArtifactSet = []
+            this.artifactIds = [-1, -1, -1, -1, -1]
+            this.optimizationResults = []
+            this.optimizationResultIndex = 0
+            this.miscPerStatBonus = {}
+            this.miscCurrentPresetName = null
+        },
     }
 };
 

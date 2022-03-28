@@ -15,6 +15,10 @@
                 <template #title>
                     我的仓库
                 </template>
+                <el-menu-item index="/accounts">
+                    <i class="el-icon-user-solid"></i>
+                    账号（{{ currentAccountName }}）
+                </el-menu-item>
                 <el-menu-item index="/artifacts">
                     <i class="el-icon-s-help"></i>
                     圣遗物
@@ -91,7 +95,7 @@
 <!--                        潜力函数-->
 <!--                    </el-menu-item>-->
 <!--                </el-submenu>-->
-                
+
 <!--                <el-menu-item index="/changelog">-->
 <!--                    <i class="el-icon-date"></i>-->
 <!--                    更新记录-->
@@ -121,6 +125,8 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex"
+
 export default {
     name: "SideBar",
     props: {
@@ -132,6 +138,9 @@ export default {
             type: String,
             default: "vertical",
         }
+    },
+    computed: {
+        ...mapGetters("accounts", ["currentAccountName"]),
     }
 }
 </script>
