@@ -1,5 +1,6 @@
 import Vuex from "vuex";
 import Vue from "vue";
+import localforage from "localforage";
 
 import accounts from "./modules/accounts";
 import artifacts from "./modules/artifact";
@@ -38,11 +39,11 @@ const _store = new Vuex.Store({
             loadingAccountData = true;
             const id = state.accounts.currentAccountId;
             const artKey = `mona_account_artifacts_${id}`;
-            commit('artifacts/set', JSON.parse(localStorage.getItem(artKey)));
+            commit('artifacts/set', await localforage.getItem(artKey));
             const presetKey = `mona_account_presets_${id}`;
-            commit('presets/set', JSON.parse(localStorage.getItem(presetKey)));
+            commit('presets/set', await localforage.getItem(presetKey));
             const kumiKey = `mona_account_kumi_${id}`;
-            commit('kumi/set', JSON.parse(localStorage.getItem(kumiKey)));
+            commit('kumi/set', await localforage.getItem(kumiKey));
             loadingAccountData = false;
         },
         async changeAccount({ dispatch, commit }, { id }) {
@@ -57,102 +58,105 @@ const _store = new Vuex.Store({
             }
             commit('accounts/deleteAccount', { id });
             const artKey = `mona_account_artifacts_${id}`;
-            localStorage.removeItem(artKey);
+            await localforage.removeItem(artKey);
             const presetKey = `mona_account_presets_${id}`;
-            localStorage.removeItem(presetKey);
+            await localforage.removeItem(presetKey);
             const kumiKey = `mona_account_kumi_${id}`;
-            localStorage.removeItem(kumiKey);
+            await localforage.removeItem(kumiKey);
         }
     }
 });
 
-// init from localStorage
-const metaDataString = localStorage.getItem('mona_meta');
-if (!metaDataString) {
-    // load old data
-    _store.commit('artifacts/oldInit');
-    // _store.commit('presets/oldInit');
-    // _store.commit('kumi/oldInit');
+async function init_store() {
+    // init from localStorage
+    let metaData = await localforage.getItem('mona_meta');
+    if (!metaData) {
+        // load old data
+        _store.commit('artifacts/oldInit');
+        // _store.commit('presets/oldInit');
+        // _store.commit('kumi/oldInit');
 
-    const metaData = {
-        version: VERSION_STORAGE,
-    };
-    localStorage.setItem('mona_meta', JSON.stringify(metaData));
-} else {
-    const metaData = JSON.parse(metaDataString);
-    if (metaData.version !== VERSION_STORAGE) {
-        // update local storage here
+        metaData = {
+            version: VERSION_STORAGE,
+        };
+        await localforage.setItem('mona_meta', metaData);
     } else {
-        const payload = JSON.parse(localStorage.getItem('mona_accounts'));
-        _store.commit('accounts/set', payload);
-        _store.dispatch('loadAccountData');
+        if (metaData.version !== VERSION_STORAGE) {
+            // update local storage here
+        } else {
+            const payload = await localforage.getItem('mona_accounts');
+            _store.commit('accounts/set', payload);
+            _store.dispatch('loadAccountData');
+        }
     }
+
+    // watch accounts change
+    _store.watch(
+        state => state.accounts,
+        async newValue => {
+            await localforage.setItem('mona_accounts', newValue);
+        },
+        {
+            deep: true,
+            immediate: true,
+        }
+    );
+
+    // watch artifacts change
+    _store.watch(
+        state => ({
+            flower: state.artifacts.flower,
+            feather: state.artifacts.feather,
+            sand: state.artifacts.sand,
+            cup: state.artifacts.cup,
+            head: state.artifacts.head,
+        }),
+        async newValue => {
+            if (loadingAccountData) {
+                return;
+            }
+            const key = `mona_account_artifacts_${_store.state.accounts.currentAccountId}`;
+            await localforage.setItem(key, newValue);
+        },
+        {
+            deep: true,
+            immediate: true,
+        },
+    );
+
+    // watch presets change
+    _store.watch(
+        state => state.presets.presets,
+        async newValue => {
+            if (loadingAccountData) {
+                return;
+            }
+            const key = `mona_account_presets_${_store.state.accounts.currentAccountId}`;
+            await localforage.setItem(key, newValue);
+        },
+        {
+            deep: true,
+            immediate: true,
+        }
+    )
+
+    // watch kumi change
+    _store.watch(
+        state => state.kumi,
+        async newValue => {
+            if (loadingAccountData) {
+                return;
+            }
+            const key = `mona_account_kumi_${_store.state.accounts.currentAccountId}`;
+            await localforage.setItem(key, newValue);
+        },
+        {
+            deep: true,
+            immediate: true,
+        }
+    );
 }
 
-// watch accounts change
-_store.watch(
-    state => state.accounts,
-    newValue => {
-        localStorage.setItem('mona_accounts', JSON.stringify(newValue));
-    },
-    {
-        deep: true,
-        immediate: true,
-    }
-);
-
-// watch artifacts change
-_store.watch(
-    state => ({
-        flower: state.artifacts.flower,
-        feather: state.artifacts.feather,
-        sand: state.artifacts.sand,
-        cup: state.artifacts.cup,
-        head: state.artifacts.head,
-    }),
-    newValue => {
-        if (loadingAccountData) {
-            return;
-        }
-        const key = `mona_account_artifacts_${_store.state.accounts.currentAccountId}`;
-        localStorage.setItem(key, JSON.stringify(newValue));
-    },
-    {
-        deep: true,
-        immediate: true,
-    },
-);
-
-// watch presets change
-_store.watch(
-    state => state.presets.presets,
-    newValue => {
-        if (loadingAccountData) {
-            return;
-        }
-        const key = `mona_account_presets_${_store.state.accounts.currentAccountId}`;
-        localStorage.setItem(key, JSON.stringify(newValue));
-    },
-    {
-        deep: true,
-        immediate: true,
-    }
-)
-
-// watch kumi change
-_store.watch(
-    state => state.kumi,
-    newValue => {
-        if (loadingAccountData) {
-            return;
-        }
-        const key = `mona_account_kumi_${_store.state.accounts.currentAccountId}`;
-        localStorage.setItem(key, JSON.stringify(newValue));
-    },
-    {
-        deep: true,
-        immediate: true,
-    }
-);
+init_store();
 
 export default _store;
