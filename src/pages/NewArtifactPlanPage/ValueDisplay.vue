@@ -1,8 +1,9 @@
 <template>
     <div class="root">
         <div class="back" :style="styleForBack"></div>
-        <span class="display">{{ (value * 100).toFixed(1) }}
-            <span v-if="extra">/ {{ extra }}</span>
+        <span class="display">
+            <span v-if="extra">{{ extra }} /</span>
+            {{ (value * 100).toFixed(1) }}%
         </span>
     </div>
 </template>

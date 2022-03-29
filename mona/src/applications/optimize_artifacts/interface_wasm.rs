@@ -45,6 +45,7 @@ impl OptimizeSingleWasm {
         };
 
         let algorithm = input.algorithm.get_algorithm();
+        let count = input.max_result_num;
 
         let result = algorithm.optimize(
             &artifacts,
@@ -55,7 +56,7 @@ impl OptimizeSingleWasm {
             &Default::default(),
             &buffs,
             &constraint,
-            100
+            count
         );
 
         JsValue::from_serde(&result).unwrap()

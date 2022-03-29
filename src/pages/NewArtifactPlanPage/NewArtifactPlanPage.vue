@@ -1,5 +1,10 @@
 <template>
     <div>
+        <apply-preset-dialog
+            ref="applyPresetDialog"
+            @selected="name => handleApplyPreset(name)"
+        ></apply-preset-dialog>
+
         <el-dialog
             title="选择圣遗物"
             width="80%"
@@ -62,6 +67,18 @@
                 <el-radio label="Heuristic">启发式剪枝</el-radio>
                 <el-radio label="Naive">纯枚举</el-radio>
             </el-radio-group>
+
+            <p class="common-title2">搭配数量</p>
+            <div style="margin-top: 12px; margin-bottom: 12px">
+                <div style="width: 40%">
+                    <el-slider
+                        :min="1"
+                        :max="100"
+                        v-model="max_result_num"
+                        :show-input="true"
+                    ></el-slider>
+                </div>
+            </div>
 
             <p class="common-title2">限定套装</p>
             <div style="margin-top: 12px; margin-bottom: 12px">
@@ -173,7 +190,7 @@
 <!--    artifacts analysis    -->
         <el-dialog
             :visible.sync="showArtifactAnalysisDialog"
-            title="圣遗物分析"
+            title="词条统计"
             width="60%"
         >
             <artifacts-set-statistics
@@ -247,9 +264,44 @@
         </el-dialog>
 
         <div class="top-things" ref="topThings">
-            <el-breadcrumb>
-                <el-breadcrumb-item>Mona</el-breadcrumb-item>
-            </el-breadcrumb>
+            <el-row>
+                <el-col :span="6">
+                    <!-- <el-breadcrumb>
+                        <el-breadcrumb-item>计算器</el-breadcrumb-item>
+                    </el-breadcrumb> -->
+                    <span>计算器</span>
+                </el-col>
+                <el-col :span="18">
+                    <div style="float: right">
+                        <el-button
+                            v-if="miscCurrentPresetName"
+                            type="primary"
+                            size="mini"
+                            icon="el-icon-caret-right"
+                            :disabled="!presetDirty"
+                            @click="handleSavePreset(miscCurrentPresetName)"
+                        >保存预设「{{ miscCurrentPresetName }}」</el-button>
+                        <el-button
+                            :type="!miscCurrentPresetName ? 'primary' : 'secondary'"
+                            size="mini"
+                            icon="el-icon-folder-add"
+                            @click="handleSavePreset(null)"
+                        >存为新预设</el-button>
+                        <!-- <el-button
+                            type="secondary"
+                            size="mini"
+                            icon="el-icon-refresh"
+                            @click="handleOptimizeArtifact"
+                        >重置页面</el-button> -->
+                        <el-button
+                            type="secondary"
+                            size="mini"
+                            icon="el-icon-folder-opened"
+                            @click="$refs.applyPresetDialog.open()"
+                        >导入预设</el-button>
+                    </div>
+                </el-col>
+            </el-row>
             <el-divider></el-divider>
         </div>
 
@@ -277,7 +329,6 @@
                             <div class="skill-div">
                                 <el-input-number
                                     size="mini"
-                                    controls-position="right"
                                     v-model="characterSkill1"
                                     :min="1"
                                     :max="15"
@@ -285,7 +336,6 @@
                                 ></el-input-number>
                                 <el-input-number
                                     size="mini"
-                                    controls-position="right"
                                     v-model="characterSkill2"
                                     :min="1"
                                     :max="15"
@@ -293,7 +343,6 @@
                                 ></el-input-number>
                                 <el-input-number
                                     size="mini"
-                                    controls-position="right"
                                     v-model="characterSkill3"
                                     :min="1"
                                     :max="15"
@@ -304,13 +353,18 @@
 
                         <div class="config-character-constellation">
                             <h3 class="common-title2">命之座</h3>
-                            <el-input-number
+                            <select-small-int
+                                v-model="characterConstellation"
+                                :min="0"
+                                :max="6"
+                            ></select-small-int>
+                            <!-- <el-input-number
                                 size="mini"
                                 controls-position="right"
                                 v-model="characterConstellation"
                                 :min="0"
                                 :max="6"
-                            ></el-input-number>
+                            ></el-input-number> -->
                         </div>
 
                         <div class="character-extra-config" v-if="characterNeedConfig">
@@ -346,13 +400,18 @@
 
                         <div class="config-weapon-refine">
                             <h3 class="common-title2">精炼</h3>
-                            <el-input-number
+                            <select-small-int
+                                v-model="weaponRefine"
+                                :min="1"
+                                :max="5"
+                            ></select-small-int>
+                            <!-- <el-input-number
                                 size="mini"
                                 controls-position="right"
                                 v-model="weaponRefine"
                                 :min="1"
                                 :max="5"
-                            ></el-input-number>
+                            ></el-input-number> -->
                         </div>
 
                         <div class="weapon-extra-config" v-if="weaponNeedConfig">
@@ -369,105 +428,10 @@
 
                 <div class="config-target-function">
                     <p class="common-title">目标函数</p>
-                    <div class="my-button-list" style="margin-bottom: 12px">
-                        <el-button
-                            type="primary"
-                            size="mini"
-                            icon="el-icon-caret-right"
-                            @click="handleOptimizeArtifact"
-                        >开始计算</el-button>
-
-                       <el-button
-                           size="mini"
-                           icon="el-icon-s-tools"
-                           type="text"
-                           @click="handleClickSetupOptimization"
-                       >计算设置</el-button>
-
-                       <el-button
-                           size="mini"
-                           icon="el-icon-s-help"
-                           type="text"
-                           @click="handleClickArtifactConfig"
-                       >圣遗物设置</el-button>
-
-                        <!-- <el-dropdown
-                            trigger="click"
-                            size="mini"
-                            @command="handleCommandSetup"
-                            style="margin-left: 12px"
-                        >
-                            <el-button
-                                size="mini"
-                            >设置<i class="el-icon-arrow-down"></i></el-button>
-
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item icon="el-icon-s-tools" command="setup-computation">计算设置</el-dropdown-item>
-                                    <el-dropdown-item icon="el-icon-s-help" command="setup-artifact">圣遗物设置</el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template>
-                        </el-dropdown> -->
-                    </div>
-
-                    <div class="my-button-list" style="margin-bottom: 12px">
-                        <el-dropdown
-                            trigger="click"
-                            size="small"
-                            @command="handleCommandPreset"
-                            @click="handleSavePreset(miscCurrentPresetName)"
-                            split-button
-                        >
-                            <template v-if="!miscCurrentPresetName">新建预设</template>
-                            <template v-else>保存预设「{{ miscCurrentPresetName }}」</template>
-
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item
-                                        v-if="miscCurrentPresetName"
-                                        icon="el-icon-s-tools"
-                                        command="save-preset"
-                                    >另存为预设</el-dropdown-item>
-    <!--                                    <el-dropdown-item icon="el-icon-s-help" command="setup-artifact">圣遗物设置</el-dropdown-item>-->
-
-                                    <el-dropdown-item
-                                        v-for="(item, index) in presetsAllFlat"
-                                        :divided="index === 0 && miscCurrentPresetName"
-                                        :key="item.name"
-                                        icon="el-icon-menu"
-                                        :command="'apply-' + item.name"
-                                    >{{ item.name }}</el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template>
-                        </el-dropdown>
-                    </div>
-<!--                    <div>-->
-<!--                        <el-button-->
-<!--                            size="mini"-->
-<!--                            icon="el-icon-star-on"-->
-<!--                            type="text"-->
-<!--                            @click="handleClickSaveOptimizeConfig"-->
-<!--                        >存为预设</el-button>-->
-<!--                        <el-button-->
-<!--                            size="mini"-->
-<!--                            icon="el-icon-star-on"-->
-<!--                            type="text"-->
-<!--                            @click="handleClickSaveOptimizeConfig"-->
-<!--                        >应用预设</el-button>-->
-<!--                    </div>-->
                     <select-target-function
                         v-model="targetFunctionName"
                         :character-name="characterName"
                     ></select-target-function>
-                    <div class="target-function-config" v-if="targetFunctionNeedConfig"
-                        style="margin-top: 12px"
-                    >
-                        <item-config
-                            v-model="targetFunctionConfig"
-                            :item-name="targetFunctionName"
-                            :configs="targetFunctionConfigConfig"
-                        ></item-config>
-                    </div>
 
                     <div class="target-function-detail">
                         <div class="detail-left">
@@ -481,27 +445,14 @@
                         </div>
                     </div>
 
-                    <div v-if="optimizationResults.length > 0"
+                    <div class="target-function-config" v-if="targetFunctionNeedConfig"
                         style="margin-top: 12px"
                     >
-                        <el-alert
-                            :title="`共计算${optimizationResults.length}组圣遗物搭配`"
-                            type="success"
-                            style="margin-bottom: 12px"
-                        ></el-alert>
-                        <el-input-number
-                            :value="optimizationResultIndex"
-                            @input="handleUseNthOptimizationResult"
-                            :min="1"
-                            :max="optimizationResults.length"
-                            size="small"
-                            style="width: 100%"
-                        ></el-input-number>
-                        <value-display
-                            :value="optimizationResults[optimizationResultIndex - 1].ratio"
-                            :extra="optimizationResults[optimizationResultIndex - 1].value.toFixed(1)"
-                            style="margin-top: 12px"
-                        ></value-display>
+                        <item-config
+                            v-model="targetFunctionConfig"
+                            :item-name="targetFunctionName"
+                            :configs="targetFunctionConfigConfig"
+                        ></item-config>
                     </div>
                 </div>
 
@@ -530,17 +481,73 @@
                 </div>
             </el-col>
 
-            <el-col :span="12" class="middle-container">
+            <el-col :span="14" class="middle-container">
+
+                <div class="my-button-list" style="margin-bottom: 12px">
+                    <el-button
+                        type="primary"
+                        size="mini"
+                        icon="el-icon-caret-right"
+                        @click="handleOptimizeArtifact"
+                    >开始搭配</el-button>
+
+                    <el-button
+                        size="mini"
+                        icon="el-icon-s-tools"
+                        type="text"
+                        @click="handleClickSetupOptimization"
+                    >算法及过滤设置</el-button>
+
+                    <el-button
+                        size="mini"
+                        icon="el-icon-s-help"
+                        type="text"
+                        @click="handleClickArtifactConfig"
+                    >圣遗物特效设置</el-button>
+                </div>
+
                 <p class="common-title">圣遗物</p>
+
+                <div v-if="optimizationResults.length > 0"
+                    style="margin-top: 12px; margin-bottom: 12px"
+                >
+
+                    <div class="constraint-min-item">
+                        <span class="constraint-min-title" style="font-size: 0.9rem">搭配结果</span>
+                        <div style="width: 100%">
+                            <el-slider
+                                :value="optimizationResultIndex"
+                                @input="handleUseNthOptimizationResult"
+                                :min="1"
+                                :max="optimizationResults.length"
+                                :show-input="true"
+                                show-stops
+                            ></el-slider>
+                        </div>
+                    </div>
+                    <value-display
+                        :value="optimizationResults[optimizationResultIndex - 1].ratio"
+                        :extra="optimizationResults[optimizationResultIndex - 1].value.toFixed(1)"
+                        style="margin-top: 12px"
+                    ></value-display>
+                </div>
 
                 <div class="artifact-tool" style="margin-bottom: 12px">
                     <el-button
                         size="mini"
-                        icon="el-icon-s-data"
+                        icon="el-icon-pie-chart"
                         @click="handleClickArtifactAnalysis"
-                    >词条分析</el-button>
+                    >词条统计</el-button>
 <!--                    <my-button-1 icon="el-icon-s-data" title="圣遗物分析"-->
 <!--                                 @click="handleClickArtifactAnalysis"-->
+<!--                    ></my-button-1>-->
+                    <el-button
+                        size="mini"
+                        icon="el-icon-data-line"
+                        @click="handleClickAttributeAnalysis"
+                    >词条收益</el-button>
+<!--                    <my-button-1 icon="el-icon-s-data" title="词条收益分析"-->
+<!--                                 @click="handleClickAttributeAnalysis"-->
 <!--                    ></my-button-1>-->
                     <el-button
                         size="mini"
@@ -554,7 +561,7 @@
                         size="mini"
                         icon="el-icon-folder"
                         @click="handleClickUseKumi"
-                    >应用套装</el-button>
+                    >导入套装</el-button>
 <!--                    <my-button-1 icon="el-icon-folder" title="应用套装"-->
 <!--                                 @click="handleClickUseKumi"-->
 <!--                    ></my-button-1>-->
@@ -643,19 +650,8 @@
                 ></transformative-damage>
             </el-col>
 
-            <el-col :span="6" class="right-container">
+            <el-col :span="4" class="right-container">
                 <div class="common-title">面板</div>
-
-                <div class="my-button-list" style="margin-bottom: 12px">
-                    <el-button
-                        size="mini"
-                        icon="el-icon-s-data"
-                        @click="handleClickAttributeAnalysis"
-                    >词条收益</el-button>
-<!--                    <my-button-1 icon="el-icon-s-data" title="词条收益分析"-->
-<!--                                 @click="handleClickAttributeAnalysis"-->
-<!--                    ></my-button-1>-->
-                </div>
 
                 <attribute-panel
                     :attribute="attributeFromWasm"
@@ -667,6 +663,7 @@
 
 <script>
 import {mapGetters} from "vuex"
+import objectHash from "object-hash"
 
 import {convertArtifact, convertArtifactName} from "@util/converter"
 import {newDefaultArtifactConfigForWasm} from "@util/artifacts"
@@ -690,6 +687,7 @@ import SelectWeaponLevel from "@c/select/SelectWeaponLevel"
 import SelectTargetFunction from "@c/select/SelectTargetFunction"
 import SelectCharacterSkill from "@c/select/SelectCharacterSkill"
 import SelectBuff from "@c/select/SelectBuff"
+import SelectSmallInt from "@c/select/SelectSmallInt"
 import ArtifactDisplay from "@c/display/ArtifactDisplay"
 import AddButton from "@c/misc/AddButton"
 import DamagePanel from "./DamagePanel"
@@ -704,6 +702,7 @@ import ValueDisplay from "./ValueDisplay"
 import EnemyConfig from "./EnemyConfig"
 import SelectArtifactMainStat from "@c/select/SelectArtifactMainStat"
 import ArtifactConfig from "./ArtifactConfig"
+import ApplyPresetDialog from "./ApplyPresetDialog"
 
 let wasmCalculated = false
 
@@ -720,6 +719,7 @@ export default {
         SelectWeaponLevel,
         SelectTargetFunction,
         SelectBuff,
+        SelectSmallInt,
         ArtifactDisplay,
         AddButton,
         DamagePanel,
@@ -736,6 +736,7 @@ export default {
         ValueDisplay,
         EnemyConfig,
         ArtifactConfig,
+        ApplyPresetDialog,
     },
     created() {
         // this.characterData = characterData
@@ -776,6 +777,7 @@ export default {
             constraintGobletMainStats: [],
             constraintHeadMainStats: [],
             algorithm: "AStar",
+            max_result_num: 5,
             constraintMinRecharge: 1,
             constraintMinElementalMastery: 0,
             constraintMinCritical: 0,
@@ -824,6 +826,9 @@ export default {
 
             characterDamageAnalysis: null,
             characterTransformativeDamage: null,
+
+            // presetDirty: true,
+            savedPresetHash: null,
         }
     },
     computed: {
@@ -1166,6 +1171,40 @@ export default {
                 })
             }
             return temp
+        },
+
+        // presets
+        presetItem() {
+            const config = this.getOptimizeArtifactWasmInterface()
+
+            const item = {
+                buffs: config.buffs,
+                character: config.character,
+                weapon: config.weapon,
+                targetFunction: config.target_function,
+                constraint: {
+                    setNames: this.constraintArtifactSet,
+                    minRecharge: this.constraintMinRecharge,
+                    minCritical: this.constraintMinCritical,
+                    minCriticalDamage: this.constraintMinCriticalDamage,
+                    minElementalMastery: this.constraintMinElementalMastery
+                },
+                filter: {
+                    sandMainStats: this.constraintSandMainStats,
+                    gobletMainStats: this.constraintGobletMainStats,
+                    headMainStats: this.constraintHeadMainStats,
+                },
+                artifactConfig: this.artifactConfig,
+                algorithm: this.algorithm,
+                max_result_num: this.max_result_num,
+                artifactEffectMode: this.artifactEffectMode
+            }
+            return item
+        },
+
+        presetDirty() {
+            const hash = objectHash(this.presetItem)
+            return hash !== this.savedPresetHash
         }
     },
     methods: {
@@ -1181,7 +1220,7 @@ export default {
             this.showConstraintDialog = true
         },
 
-        usePreset(name) {
+        async usePreset(name) {
             const entry = getPresetEntryByName(name)
             const item = entry.item
 
@@ -1205,23 +1244,20 @@ export default {
                 this.characterSkill2 = c.skill2 + 1
                 this.characterSkill3 = c.skill3 + 1
 
-                this.$nextTick(() => {
-                    this.characterConfig = c.params
+                await this.$nextTick()
+                this.characterConfig = c.params
 
-                    // use weapon
-                    // this has to be executed after character update, because weapon type will be updated if character is different
-                    const w = item.weapon
-                    if (w) {
-                        this.weaponName = w.name
-                        this.weaponLevel = w.level.toString() + (w.ascend ? "+" : "-")
-                        this.weaponRefine = w.refine
+                // use weapon
+                // this has to be executed after character update, because weapon type will be updated if character is different
+                const w = item.weapon
+                if (w) {
+                    this.weaponName = w.name
+                    this.weaponLevel = w.level.toString() + (w.ascend ? "+" : "-")
+                    this.weaponRefine = w.refine
 
-                        this.$nextTick(() => {
-                            // console.log("in next tick", w.name)
-                            this.weaponConfig = w.params
-                        })
-                    }
-                })
+                    await this.$nextTick()
+                    this.weaponConfig = w.params
+                }
             }
 
             // use target function
@@ -1229,9 +1265,8 @@ export default {
             if (tf) {
                 this.targetFunctionName = tf.name
 
-                this.$nextTick(() => {
-                    this.targetFunctionConfig = tf.params
-                })
+                await this.$nextTick()
+                this.targetFunctionConfig = tf.params
             }
 
             // use constraint
@@ -1254,6 +1289,7 @@ export default {
 
             // use compute mode
             this.algorithm = item.algorithm ?? "AStar"
+            this.max_result_num = item.max_result_num ?? 5
 
             // use artifact effect mode
             this.artifactEffectMode = item.artifactEffectMode ?? "auto"
@@ -1262,72 +1298,26 @@ export default {
             this.artifactConfig = item.artifactConfig ?? newDefaultArtifactConfigForWasm()
         },
 
-        handleCommandPreset(cmd) {
-            if (cmd === "save-preset") {
-                this.handleClickSaveOptimizeConfig()
-            } else {
-                if (cmd.startsWith("apply-")) {
-                    const name = cmd.slice(6)
-
-                    this.usePreset(name)
-
-                    this.miscCurrentPresetName = name
-                }
-            }
+        async handleApplyPreset(name) {
+            await this.usePreset(name)
+            this.miscCurrentPresetName = name
+            this.savedPresetHash = objectHash(this.presetItem)
         },
 
-        handleSavePreset(name) {
+        async handleSavePreset(name) {
+            const item = deepCopy(this.presetItem)
             if (!name) {
-                this.handleClickSaveOptimizeConfig()
-            } else {
-                const item = this.getPresetItem()
-                createOrUpdatePreset(item, name)
-
-                this.$message.success("已保存")
+                name = (await this.$prompt("输入名称（重复名称将覆盖）", "存为预设", {
+                    confirmButtonText: "确定",
+                    cancelButtonText: "取消",
+                    inputPattern: /[^\s]+$/,
+                    inputValue: this.presetDefaultName
+                })).value
+                this.miscCurrentPresetName = item.name = name
             }
-        },
-
-        getPresetItem() {
-            const config = this.getOptimizeArtifactWasmInterface()
-
-            const item = {
-                buffs: deepCopy(config.buffs),
-                character: deepCopy(config.character),
-                weapon: deepCopy(config.weapon),
-                targetFunction: deepCopy(config.target_function),
-                constraint: {
-                    setNames: deepCopy(this.constraintArtifactSet),
-                    minRecharge: this.constraintMinRecharge,
-                    minCritical: this.constraintMinCritical,
-                    minCriticalDamage: this.constraintMinCriticalDamage,
-                    minElementalMastery: this.constraintMinElementalMastery
-                },
-                filter: {
-                    sandMainStats: deepCopy(this.constraintSandMainStats),
-                    gobletMainStats: deepCopy(this.constraintGobletMainStats),
-                    headMainStats: deepCopy(this.constraintHeadMainStats),
-                },
-                artifactConfig: deepCopy(this.artifactConfig),
-                algorithm: this.algorithm,
-                artifactEffectMode: this.artifactEffectMode
-            }
-            return item
-        },
-
-        handleClickSaveOptimizeConfig() {
-            const item = this.getPresetItem()
-
-            this.$prompt("输入名称（重复名称将覆盖）", "存为预设", {
-                confirmButtonText: "确定",
-                cancelButtonText: "取消",
-                inputPattern: /[^\s]+$/,
-                inputValue: this.presetDefaultName
-            }).then(({ value }) => {
-                item.name = value
-                createOrUpdatePreset(item, value)
-                this.miscCurrentPresetName = value
-                this.$message.success("保存成功")
-            })
+            createOrUpdatePreset(item, name)
+            this.savedPresetHash = objectHash(this.presetItem)
+            this.$message.success("已保存")
         },
 
         handleClickSaveAsKumi() {
@@ -1451,6 +1441,7 @@ export default {
                 buffs: this.buffsInterface,
                 artifact_config,
                 algorithm: this.algorithm,
+                max_result_num: this.max_result_num,
             }
         },
 
