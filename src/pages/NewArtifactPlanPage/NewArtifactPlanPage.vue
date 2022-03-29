@@ -42,148 +42,154 @@
 <!--    computation setup    -->
         <el-dialog
             :visible.sync="showConstraintDialog"
-            title="计算设置"
+            title="算法及过滤设置"
             width="60%"
         >
-            <p class="common-title2">
-                算法
-                <el-tooltip>
-                    <i class="el-icon-question" content=""></i>
-                    <template #content>
-                        A*：推荐<br>
-                        启发式剪枝：不保证得到最优解，但是速度快<br>
-                        纯枚举：不推荐
-                    </template>
-                </el-tooltip>
-            </p>
-            <el-alert
-                v-if="algorithm === 'Naive'"
-                title="请限定套装或者主词条，否则计算将十分耗时，可能导致计算超时"
-                type="warning"
-                style="margin-bottom: 12px"
-            ></el-alert>
-            <el-radio-group v-model="algorithm">
-                <el-radio label="AStar">A*</el-radio>
-                <el-radio label="Heuristic">启发式剪枝</el-radio>
-                <el-radio label="Naive">纯枚举</el-radio>
-            </el-radio-group>
+            <el-row>
+                <el-col :span="15">
+                    <p class="common-title2">
+                        算法
+                        <el-tooltip>
+                            <i class="el-icon-question" content=""></i>
+                            <template #content>
+                                A*：推荐<br>
+                                启发式剪枝：不保证得到最优解，但是速度快<br>
+                                纯枚举：不推荐
+                            </template>
+                        </el-tooltip>
+                    </p>
+                    <el-alert
+                        v-if="algorithm === 'Naive'"
+                        title="请限定套装或者主词条，否则计算将十分耗时，可能导致计算超时"
+                        type="warning"
+                        style="margin-bottom: 12px"
+                    ></el-alert>
+                    <el-radio-group v-model="algorithm">
+                        <el-radio label="AStar">A*</el-radio>
+                        <el-radio label="Heuristic">启发式剪枝</el-radio>
+                        <el-radio label="Naive">纯枚举</el-radio>
+                    </el-radio-group>
 
-            <p class="common-title2">搭配数量</p>
-            <div style="margin-top: 12px; margin-bottom: 12px">
-                <div style="width: 40%">
-                    <el-slider
-                        :min="1"
-                        :max="100"
-                        v-model="max_result_num"
-                        :show-input="true"
-                    ></el-slider>
-                </div>
-            </div>
-
-            <p class="common-title2">限定套装</p>
-            <div style="margin-top: 12px; margin-bottom: 12px">
-                <select-artifact-set
-                    multiple
-                    v-model="constraintArtifactSet"
-                    style="width: 30%"
-                ></select-artifact-set>
-            </div>
-
-            <p class="common-title2">限定主词条</p>
-            <div style="margin-top: 12px; margin-bottom: 12px">
-                <div class="constraint-main-stat-item">
-                    <span>时之沙</span>
-                    <select-artifact-main-stat
-                        v-model="constraintSandMainStats"
-                        :include-any="false"
-                        :multiple="true"
-                        position="sand"
-                        style="width: 30%"
-                    ></select-artifact-main-stat>
-                </div>
-                <div class="constraint-main-stat-item">
-                    <span>空之杯</span>
-                    <select-artifact-main-stat
-                        v-model="constraintGobletMainStats"
-                        :include-any="false"
-                        :multiple="true"
-                        position="cup"
-                        style="width: 30%"
-                    ></select-artifact-main-stat>
-                </div>
-                <div class="constraint-main-stat-item">
-                    <span>理之冠</span>
-                    <select-artifact-main-stat
-                        v-model="constraintHeadMainStats"
-                        :include-any="false"
-                        :multiple="true"
-                        position="head"
-                        style="width: 30%"
-                    ></select-artifact-main-stat>
-                </div>
-            </div>
-
-            <p class="constraint-title">限定最小值</p>
-            <div>
-                <div class="constraint-min-item">
-                    <span class="constraint-min-title">元素充能效率</span>
-                    <div style="width: 40%">
-                        <el-slider
-                            :min="1"
-                            :max="4"
-                            :step="0.05"
-                            v-model="constraintMinRecharge"
-                            :show-input="true"
-                        ></el-slider>
+                    <p class="common-title2">搭配数量</p>
+                    <div style="margin-top: 12px; margin-bottom: 12px">
+                        <div style="width: 70%">
+                            <el-slider
+                                :min="1"
+                                :max="100"
+                                v-model="max_result_num"
+                                :show-input="true"
+                            ></el-slider>
+                        </div>
                     </div>
-                </div>
-                <div class="constraint-min-item">
-                    <span class="constraint-min-title">元素精通</span>
-                    <div style="width: 40%">
-                        <el-slider
-                            :min="0"
-                            :max="2000"
-                            :step="10"
-                            v-model="constraintMinElementalMastery"
-                            :show-input="true"
-                        ></el-slider>
-                    </div>
-                </div>
-                <div class="constraint-min-item">
-                    <span class="constraint-min-title">暴击率</span>
-                    <div style="width: 40%">
-                        <el-slider
-                            :min="0"
-                            :max="1"
-                            :step="0.01"
-                            v-model="constraintMinCritical"
-                            :show-input="true"
-                        ></el-slider>
-                    </div>
-                </div>
-                <div class="constraint-min-item">
-                    <span class="constraint-min-title">暴击伤害</span>
-                    <div style="width: 40%">
-                        <el-slider
-                            :min="0"
-                            :max="4"
-                            :step="0.1"
-                            v-model="constraintMinCriticalDamage"
-                            :show-input="true"
-                        ></el-slider>
-                    </div>
-                </div>
-            </div>
 
-            <p class="common-title2">过滤圣遗物组</p>
-            <div style="max-height: 50vh; overflow: auto" class="mona-scroll">
-                <el-tree
-                    :data="kumiTreeDataForElementUI"
-                    show-checkbox
-                    ref="filterKumiRef"
-                >
-                </el-tree>
-            </div>
+                    <p class="common-title2">限定套装</p>
+                    <div style="margin-top: 12px; margin-bottom: 12px">
+                        <select-artifact-set
+                            anyOption
+                            multiple
+                            v-model="constraintArtifactSet"
+                            style="width: 50%"
+                        ></select-artifact-set>
+                    </div>
+
+                    <p class="common-title2">限定主词条</p>
+                    <div style="margin-top: 12px; margin-bottom: 12px">
+                        <div class="constraint-main-stat-item">
+                            <span>时之沙</span>
+                            <select-artifact-main-stat
+                                v-model="constraintSandMainStats"
+                                :include-any="false"
+                                :multiple="true"
+                                position="sand"
+                                style="width: 30%"
+                            ></select-artifact-main-stat>
+                        </div>
+                        <div class="constraint-main-stat-item">
+                            <span>空之杯</span>
+                            <select-artifact-main-stat
+                                v-model="constraintGobletMainStats"
+                                :include-any="false"
+                                :multiple="true"
+                                position="cup"
+                                style="width: 30%"
+                            ></select-artifact-main-stat>
+                        </div>
+                        <div class="constraint-main-stat-item">
+                            <span>理之冠</span>
+                            <select-artifact-main-stat
+                                v-model="constraintHeadMainStats"
+                                :include-any="false"
+                                :multiple="true"
+                                position="head"
+                                style="width: 30%"
+                            ></select-artifact-main-stat>
+                        </div>
+                    </div>
+
+                    <p class="constraint-title">限定最小值</p>
+                    <div>
+                        <div class="constraint-min-item">
+                            <span class="constraint-min-title">元素充能效率</span>
+                            <div style="width: 70%">
+                                <el-slider
+                                    :min="1"
+                                    :max="4"
+                                    :step="0.05"
+                                    v-model="constraintMinRecharge"
+                                    :show-input="true"
+                                ></el-slider>
+                            </div>
+                        </div>
+                        <div class="constraint-min-item">
+                            <span class="constraint-min-title">元素精通</span>
+                            <div style="width: 70%">
+                                <el-slider
+                                    :min="0"
+                                    :max="2000"
+                                    :step="10"
+                                    v-model="constraintMinElementalMastery"
+                                    :show-input="true"
+                                ></el-slider>
+                            </div>
+                        </div>
+                        <div class="constraint-min-item">
+                            <span class="constraint-min-title">暴击率</span>
+                            <div style="width: 70%">
+                                <el-slider
+                                    :min="0"
+                                    :max="1"
+                                    :step="0.01"
+                                    v-model="constraintMinCritical"
+                                    :show-input="true"
+                                ></el-slider>
+                            </div>
+                        </div>
+                        <div class="constraint-min-item">
+                            <span class="constraint-min-title">暴击伤害</span>
+                            <div style="width: 70%">
+                                <el-slider
+                                    :min="0"
+                                    :max="4"
+                                    :step="0.1"
+                                    v-model="constraintMinCriticalDamage"
+                                    :show-input="true"
+                                ></el-slider>
+                            </div>
+                        </div>
+                    </div>
+                </el-col>
+                <el-col :span="9">
+                    <p class="common-title2">过滤圣遗物组</p>
+                    <div style="max-height: 50vh; overflow: auto" class="mona-scroll">
+                        <el-tree
+                            :data="kumiTreeDataForElementUI"
+                            show-checkbox
+                            ref="filterKumiRef"
+                        >
+                        </el-tree>
+                    </div>
+                </el-col>
+            </el-row>
 
         </el-dialog>
 
@@ -273,6 +279,13 @@
                 </el-col>
                 <el-col :span="18">
                     <div style="float: right">
+                        <el-button
+                            v-if="cancelOptimizeArtifact"
+                            type="danger"
+                            size="mini"
+                            icon="el-icon-warning-outline"
+                            @click="cancelOptimizeArtifact"
+                        >中止计算</el-button>
                         <el-button
                             v-if="miscCurrentPresetName"
                             type="primary"
@@ -801,6 +814,7 @@ export default {
             targetFunctionConfig: "NoConfig",
             optimizationResults: [],
             optimizationResultIndex: 0,
+            cancelOptimizeArtifact: null,
 
             artifactIds: [-1, -1, -1, -1, -1],
             artifactSingleConfig: null,
@@ -827,7 +841,6 @@ export default {
             characterDamageAnalysis: null,
             characterTransformativeDamage: null,
 
-            // presetDirty: true,
             savedPresetHash: null,
         }
     },
@@ -844,10 +857,6 @@ export default {
         ...mapGetters("presets", {
             presetsAllFlat: "allFlat"
         }),
-
-        // ...mapState("kumi", {
-        //
-        // }),
 
         // enemy
         enemyInterface() {
@@ -1086,15 +1095,18 @@ export default {
 
         // constraint
         constraintSetMode() {
-            const convertedName = this.constraintArtifactSet.map(x => convertArtifactName(x))
+            const hasAny = this.constraintArtifactSet.some(x => x === 'any')
+            const convertedName = this.constraintArtifactSet
+                .filter(x => x !== 'any')
+                .map(convertArtifactName)
             const len = convertedName.length
             if (len === 2) {
-                return {
-                    "Set22": convertedName
-                }
+                return { "Set22": convertedName }
             } else if (len === 1) {
-                return {
-                    "Set4": convertedName[0]
+                if (hasAny) {
+                    return { "Set2": convertedName[0] }
+                } else {
+                    return { "Set4": convertedName[0] }
                 }
             } else {
                 return "Any"
@@ -1457,13 +1469,19 @@ export default {
         },
 
         handleOptimizeArtifact() {
-            const start = new Date()
             const loading = this.$loading({
+                target: this.$refs.bigContainer.$el,
                 lock: true,
-                text: "莫娜占卜中"
+                text: "莫娜占卜中",
+                // background: 'rgba(0, 0, 0, 0.7)',
             })
 
-            wasmSingleOptimize(this.getOptimizeArtifactWasmInterface(), this.getArtifactsToBeCalculated()).then(results => {
+            const start = new Date()
+            let [promise, cancel] = wasmSingleOptimize(this.getOptimizeArtifactWasmInterface(), this.getArtifactsToBeCalculated())
+            const timer = setTimeout(() => {
+                this.cancelOptimizeArtifact = cancel
+            }, 800)
+            promise.then(results => {
                 const end = new Date()
                 console.log(`time: ${(end - start) / 1000}s`)
 
@@ -1476,6 +1494,8 @@ export default {
             }).catch(e => {
                 this.$message.error(e)
             }).finally(() => {
+                clearTimeout(timer)
+                this.cancelOptimizeArtifact = null
                 loading.close()
             })
         },
