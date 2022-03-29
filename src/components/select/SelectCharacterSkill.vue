@@ -1,24 +1,14 @@
 <!-- 选择技能index -->
 
 <template>
-    <el-select
+    <el-cascader
         :value="value"
-        @input="$emit('input', $event)"
+        :options="options"
+        :props="{ expandTrigger: 'hover', emitPath: false }"
+        @change="$emit('input', $event)"
         size="small"
-    >
-        <el-option-group
-            v-for="(list, groupName) in skillMap"
-            :key="groupName"
-            :label="groupName"
-        >
-            <el-option
-                v-for="item in list"
-                :key="item.index"
-                :label="item.chs"
-                :value="item.index"
-            ></el-option>
-        </el-option-group>
-    </el-select>
+        style="width: 50%"
+    ></el-cascader>
 </template>
 
 <script>
@@ -28,27 +18,26 @@ export default {
     name: "SelectCharacterSkill",
     props: ["characterName", "value"],
     computed: {
-        skillMap() {
+        options() {
             const data = characterData[this.characterName]
 
-            let map = {}
-            if (data.skillMap1.length > 0) {
-                map[data.skillName1] = data.skillMap1
+            const options = [];
+            for (let i = 0; i < 3; i++) {
+                const j = i + 1;
+                const skillMap = data[`skillMap${j}`]
+                if (skillMap.length > 0) {
+                    options.push({
+                        label: data[`skillName${j}`],
+                        value: data[`skillName${j}`],
+                        children: skillMap.map(item => ({
+                            label: item.chs,
+                            value: item.index,
+                        })),
+                    })
+                }
             }
-            if (data.skillMap2.length > 0) {
-                map[data.skillName2] = data.skillMap2
-            }
-            if (data.skillMap3.length > 0) {
-                map[data.skillName3] = data.skillMap3
-            }
-            
-            return map
-        }
+            return options;
+        },
     },
-    watch: {
-        "characterName": function (newValue, oldValue) {
-            this.$emit("input", 0)
-        }
-    }
 }
 </script>

@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service serve",
     "build": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service build",
+    "build:gh": "cross-env MONA_TITLE=莫娜占卜铺·改 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=true MONA_ROUTE_MODE=hash vue-cli-service build",
     "lint": "vue-cli-service lint",
     "build:1": "cross-env MONA_TITLE=原神圣遗物工具 MONA_NEED_BEIAN=true MONA_BEIAN_NUMBER=1 MONA_NEED_MIGRATE=true MONA_ROUTE_MODE=hash vue-cli-service build",
     "build:2": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=true MONA_BEIAN_NUMBER=2 MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=history vue-cli-service build",
@@ -18,7 +19,6 @@
     "@fortawesome/free-brands-svg-icons": "^5.15.1",
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/vue-fontawesome": "^2.0.0",
-    "axios": "^0.21.1",
     "core-js": "^3.20.3",
     "element-ui": "^2.15.6",
     "fuse.js": "^6.5.3",
@@ -26,8 +26,7 @@
     "is-electron": "^2.2.0",
     "localforage": "^1.10.0",
     "object-hash": "^2.2.0",
-    "vue": "^2.6.11",
-    "vue-axios": "^3.2.4"
+    "vue": "^2.6.11"
   },
   "devDependencies": {
     "@babel/core": "^7.16.10",
@@ -35,6 +34,7 @@
     "@vue/cli-plugin-babel": "^5.0.0-rc.2",
     "@vue/cli-plugin-eslint": "^5.0.0-rc.2",
     "@vue/cli-service": "^5.0.0-rc.2",
+    "axios": "^0.26.1",
     "babel-eslint": "^10.1.0",
     "babel-plugin-component": "^1.1.1",
     "cross-env": "^7.0.3",
@@ -51,9 +51,7 @@
     "sass-loader": "^10.1.1",
     "vue-router": "^3.4.8",
     "vue-template-compiler": "^2.6.11",
-    "vuex": "^3.5.1",
-    "worker-loader": "^3.0.8",
-    "worker-plugin": "^5.0.0"
+    "vuex": "^3.5.1"
   },
   "eslintConfig": {
     "root": true,

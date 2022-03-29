@@ -13,7 +13,7 @@ import "./global_api";
 
 import Vue from 'vue';
 
-import Router from "./router/router";
+import router from "./router/router";
 import store from "./store/store";
 
 import App from './App.vue';
@@ -33,7 +33,7 @@ async function mount() {
                     this.$message(msg);
             },
         },
-        router: Router,
+        router,
         store,
     }).$mount('#app');
 

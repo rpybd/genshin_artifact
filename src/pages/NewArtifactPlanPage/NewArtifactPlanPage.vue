@@ -279,13 +279,15 @@
                 </el-col>
                 <el-col :span="18">
                     <div style="float: right">
-                        <el-button
-                            v-if="cancelOptimizeArtifact"
-                            type="danger"
-                            size="mini"
-                            icon="el-icon-warning-outline"
-                            @click="cancelOptimizeArtifact"
-                        >中止计算</el-button>
+                        <template v-if="cancelOptimizeArtifact">
+                            <el-button
+                                type="danger"
+                                size="mini"
+                                icon="el-icon-warning-outline"
+                                @click="cancelOptimizeArtifact"
+                            >中止计算</el-button>
+                            <el-divider direction="vertical"></el-divider>
+                        </template>
                         <el-button
                             v-if="miscCurrentPresetName"
                             type="primary"
@@ -551,33 +553,22 @@
                         icon="el-icon-pie-chart"
                         @click="handleClickArtifactAnalysis"
                     >词条统计</el-button>
-<!--                    <my-button-1 icon="el-icon-s-data" title="圣遗物分析"-->
-<!--                                 @click="handleClickArtifactAnalysis"-->
-<!--                    ></my-button-1>-->
                     <el-button
                         size="mini"
                         icon="el-icon-data-line"
                         @click="handleClickAttributeAnalysis"
                     >词条收益</el-button>
-<!--                    <my-button-1 icon="el-icon-s-data" title="词条收益分析"-->
-<!--                                 @click="handleClickAttributeAnalysis"-->
-<!--                    ></my-button-1>-->
+                    <el-divider direction="vertical"></el-divider>
                     <el-button
                         size="mini"
                         icon="el-icon-star-on"
                         @click="handleClickSaveAsKumi"
                     >存为套装</el-button>
-<!--                    <my-button-1 icon="el-icon-star-on" title="存为套装"-->
-<!--                                 @click="handleClickSaveAsKumi"-->
-<!--                    ></my-button-1>-->
                     <el-button
                         size="mini"
                         icon="el-icon-folder"
                         @click="handleClickUseKumi"
                     >导入套装</el-button>
-<!--                    <my-button-1 icon="el-icon-folder" title="应用套装"-->
-<!--                                 @click="handleClickUseKumi"-->
-<!--                    ></my-button-1>-->
                 </div>
 
                 <div class="artifacts">
@@ -627,17 +618,11 @@
                         icon="el-icon-s-data"
                         @click="handleDisplayAnalysis"
                     >明细</el-button>
-<!--                    <my-button-1 icon="el-icon-s-data" title="明细"-->
-<!--                        @click="handleDisplayAnalysis"-->
-<!--                    ></my-button-1>-->
                     <el-button
                         size="mini"
                         icon="el-icon-s-tools"
                         @click="handleClickEnemyConfig"
                     >敌人设置</el-button>
-<!--                    <my-button-1 icon="el-icon-s-operation" title="敌人设置"-->
-<!--                                 @click="handleClickEnemyConfig"-->
-<!--                    ></my-button-1>-->
                 </div>
                 <div v-if="characterNeedSkillConfig" style="margin-bottom: 16px;">
                     <item-config
