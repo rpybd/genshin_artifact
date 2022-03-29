@@ -496,7 +496,7 @@
                 </div>
             </el-col>
 
-            <el-col :span="14" class="middle-container">
+            <el-col :span="9" class="middle-container">
 
                 <div class="my-button-list" style="margin-bottom: 12px">
                     <el-button
@@ -608,10 +608,17 @@
                         :configs="artifactConfig4Configs"
                     ></item-config>
                 </div>
+            </el-col>
+
+            <el-col :span="9" class="right-container">
+                <div class="common-title">面板</div>
+                <attribute-panel
+                    :attribute="attributeFromWasm"
+                ></attribute-panel>
 
                 <el-divider></el-divider>
 
-                <p class="common-title">伤害计算</p>
+                <p class="common-title">伤害</p>
                 <div class="my-button-list" style="margin-bottom: 12px">
                     <el-button
                         size="mini"
@@ -646,14 +653,6 @@
                 <transformative-damage
                     :data="characterTransformativeDamage"
                 ></transformative-damage>
-            </el-col>
-
-            <el-col :span="4" class="right-container">
-                <div class="common-title">面板</div>
-
-                <attribute-panel
-                    :attribute="attributeFromWasm"
-                ></attribute-panel>
             </el-col>
         </el-row>
     </div>
