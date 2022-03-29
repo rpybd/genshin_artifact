@@ -54,6 +54,7 @@
         <div class="body" v-if="presetsLength > 0">
             <preset-item
                 v-for="entry in allFlat"
+                :key="entry.name"
                 :item="entry.item"
                 :name="entry.name"
                 @delete="handleDeletePreset(entry.name)"
@@ -155,7 +156,7 @@ export default {
 
         handleExportAll() {
             const str = JSON.stringify(this.allFlat)
-            
+
             downloadString(str, "text/plain", "预设")
         },
 

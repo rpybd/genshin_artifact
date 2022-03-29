@@ -120,7 +120,9 @@ export default {
                     const value = stat.value
 
                     const [min, max] = howManyUpgradeCount(value, name, star)
-                    const eff = value / artifactEff[star][name][3]
+                    const thisArtifactEff = artifactEff[star][name]
+                    const avgEff = thisArtifactEff.reduce((x, y) => x + y) / thisArtifactEff.length
+                    const eff = value / avgEff
 
                     if (!Object.prototype.hasOwnProperty.call(result, name)) {
                         result[name] = {
