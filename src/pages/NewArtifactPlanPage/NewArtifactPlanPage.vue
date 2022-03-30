@@ -571,42 +571,61 @@
                     >导入套装</el-button>
                 </div>
 
-                <div class="artifacts">
-                    <div
-                        v-for="(id, index) in artifactIds"
-                        :key="id"
-                        class="artifact-item-or-button"
+                <div>
+                    <el-tabs
+                        v-model="currentArtifactGroupName"
+                        type="card"
+                        addable
+                        @edit="handleArtifactTabsEdit"
+                        style="width: 100%"
                     >
-                        <artifact-display
-                            v-if="artifactItems[index]"
-                            :item="artifactItems[index]"
-                            selectable
-                            :buttons="true"
-                            :delete-button="true"
-                            @delete="handleRemoveArtifact(index)"
-                            @toggle="handleToggleArtifact(id)"
-                            @click="handleGotoSelectArtifact(index)"
-                            class="artifact-display"
-                        ></artifact-display>
-                        <add-button
-                            v-else
-                            @click="handleGotoSelectArtifact(index)"
-                            class="add-button"
-                            style="height: 5vw; width: 5vw"
-                        ></add-button>
-                    </div>
-                </div>
+                        <el-tab-pane
+                            v-for="(group, index) in artifactGroups"
+                            :key="group.name"
+                            :name="group.name"
+                            :label="`圣遗物组${index + 1}`"
+                            :closable="artifactGroups.length > 1"
+                            lazy
+                            class="artifacts"
+                            style="width: 100%"
+                        >
+                            <div
+                                v-for="(id, index) in artifactIds"
+                                :key="id"
+                                class="artifact-item-or-button"
+                            >
+                                <artifact-display
+                                    v-if="artifactItems[index]"
+                                    :item="artifactItems[index]"
+                                    selectable
+                                    :buttons="true"
+                                    :delete-button="true"
+                                    @delete="handleRemoveArtifact(index)"
+                                    @toggle="handleToggleArtifact(id)"
+                                    @click="handleGotoSelectArtifact(index)"
+                                    class="artifact-display"
+                                ></artifact-display>
+                                <add-button
+                                    v-else
+                                    @click="handleGotoSelectArtifact(index)"
+                                    class="add-button"
+                                    style="height: 7vw; width: 11vw"
+                                ></add-button>
+                            </div>
 
-                <div v-if="artifactNeedConfig4" style="margin-top: 16px">
-                    <p class="common-description">
-                        <span class="effect4">四件套效果：</span>
-                        <span v-html="artifactEffect4Text"></span>
-                    </p>
-                    <item-config
-                        v-model="artifactSingleConfig"
-                        :item-name="artifactConfig4ItemName"
-                        :configs="artifactConfig4Configs"
-                    ></item-config>
+                        </el-tab-pane>
+                    </el-tabs>
+                    <div v-if="artifactNeedConfig4" style="margin-top: 16px">
+                        <p class="common-description">
+                            <span class="effect4">四件套效果：</span>
+                            <span v-html="artifactEffect4Text"></span>
+                        </p>
+                        <item-config
+                            v-model="artifactSingleConfig"
+                            :item-name="artifactConfig4ItemName"
+                            :configs="artifactConfig4Configs"
+                        ></item-config>
+                    </div>
                 </div>
             </el-col>
 
@@ -703,6 +722,16 @@ import ApplyPresetDialog from "./ApplyPresetDialog"
 
 let wasmCalculated = false
 
+let groupId = 0
+
+function getGroupDefault() {
+    return {
+        name: String(groupId++),
+        ids: [-1, -1, -1, -1, -1],
+        singleConfig: null,
+    }
+}
+
 export default {
     name: "NewArtifactPlanPage",
     components: {
@@ -749,6 +778,10 @@ export default {
         // console.log(container.style.height)
     },
     data () {
+        const artifactGroups = [
+            getGroupDefault(),
+            getGroupDefault(),
+        ]
         return {
             characterName: "Amber",
             characterLevel: "90",
@@ -800,8 +833,9 @@ export default {
             optimizationResultIndex: 0,
             cancelOptimizeArtifact: null,
 
-            artifactIds: [-1, -1, -1, -1, -1],
-            artifactSingleConfig: null,
+            artifactGroups,
+            currentArtifactGroupName: artifactGroups[0].name,
+
             artifactConfig: newDefaultArtifactConfigForWasm(),
             artifactEffectMode: "auto",
 
@@ -983,6 +1017,19 @@ export default {
         },
 
         // artifact computed
+        artifactGroup() {
+            return this.artifactGroups.find(g => g.name === this.currentArtifactGroupName)
+        },
+
+        artifactIds: {
+            get() {
+                return this.artifactGroup.ids
+            },
+            set(value) {
+                this.artifactGroup.ids = value
+            }
+        },
+
         artifactItems() {
             let temp = []
             for (let id of this.artifactIds) {
@@ -1063,6 +1110,15 @@ export default {
                 return data.config4
             }
             return []
+        },
+
+        artifactSingleConfig: {
+            get() {
+                return this.artifactGroup.singleConfig
+            },
+            set(value) {
+                this.artifactGroup.singleConfig = value
+            }
         },
 
         artifactConfigForCalculator() {
@@ -1448,6 +1504,26 @@ export default {
             return artifacts16
         },
 
+        handleArtifactTabsEdit(targetName, action) {
+            if (action === 'add') {
+                const group = getGroupDefault()
+                this.artifactGroups.push(group)
+                this.currentArtifactGroupName = group.name
+            } else if (action === 'remove') {
+                const tabs = this.artifactGroups
+                if (this.currentArtifactGroupName === targetName) {
+                    tabs.forEach((tab, index) => {
+                        if (tab.name === targetName) {
+                            const nextTab = tabs[index + 1] || tabs[index - 1];
+                            this.currentArtifactGroupName = nextTab.name;
+                        }
+                    });
+                }
+                const index = this.artifactGroups.findIndex(g => g.name === targetName)
+                this.artifactGroups.splice(index, 1)
+            }
+        },
+
         handleClickArtifactAnalysis() {
             this.showArtifactAnalysisDialog = true
         },
@@ -1707,8 +1783,10 @@ export default {
 
                 const nameWasm = convertArtifactName(newName)
                 const configItemName = `config_${toSnakeCase(nameWasm)}`
-                this.artifactSingleConfig = {
-                    [configItemName]: defaultConfig
+                if (!this.artifactSingleConfig?.hasOwnProperty(configItemName)) {
+                    this.artifactSingleConfig = {
+                        [configItemName]: defaultConfig
+                    }
                 }
                 // console.log(this.artifactSingleConfig)
             }
@@ -1732,7 +1810,12 @@ export default {
 
         "$store.state.accounts.currentAccountId"() {
             this.constraintArtifactSet = []
-            this.artifactIds = [-1, -1, -1, -1, -1]
+            this.artifactGroups.unshift(
+                getGroupDefault(),
+                getGroupDefault(),
+            )
+            this.currentArtifactGroupName = this.artifactGroups[0].name
+            this.artifactGroups.splice(2)
             this.optimizationResults = []
             this.optimizationResultIndex = 0
             this.miscPerStatBonus = {}
