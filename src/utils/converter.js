@@ -21,7 +21,7 @@ const nameMap = {
     "oceanhuedclam": "OceanHuedClam",
     "paleflame": "PaleFlame",
     "prayersfordestiny": "PrayersForDestiny",
-    "prayersforillumination": "PrayersForIlluminaton",
+    "prayersforillumination": "PrayersForIllumination",
     "prayersforwisdom": "PrayersForWisdom",
     "prayerstospringtime": "PrayersToSpringtime",
     "resolutionofsojourner": "ResolutionOfSojourner",
@@ -76,7 +76,7 @@ function convertStat(stat) {
 
 export function convertArtifact(artifact) {
     return {
-        "set_name": nameMap[artifact.setName.toLowerCase()],
+        "set_name": convertArtifactName(artifact.setName),
         "slot": slotMap[artifact.position],
         "level": artifact.level,
         "star": artifact.star,
@@ -87,7 +87,13 @@ export function convertArtifact(artifact) {
 }
 
 export function convertArtifactName(name) {
-    return nameMap[name.toLowerCase()]
+    const lower = name.toLowerCase()
+    if (Object.prototype.hasOwnProperty.call(nameMap, lower)) {
+        return nameMap[lower]
+    } else {
+        return name
+    }
+    // return nameMap[name.toLowerCase()]
 }
 
 // dir: 1: old -> new
