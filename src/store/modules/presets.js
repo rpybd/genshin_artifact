@@ -26,6 +26,8 @@ export default {
                     }
                 }
                 state.presets = payload;
+            } else {
+                state.presets = {};
             }
         },
 

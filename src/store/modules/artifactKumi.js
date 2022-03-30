@@ -92,6 +92,8 @@ export default {
         set(state, payload) {
             if (payload) {
                 state.kumi = payload.kumi
+            } else {
+                state.kumi = getDefault()
             }
         },
 
