@@ -50,7 +50,7 @@ let now = new Date();
 let buildDate = now.toString();
 
 module.exports = {
-    publicPath: process.env.PublicPath || '/',
+    publicPath: process.env.PUBLIC_PATH || '/',
     configureWebpack: {
         resolve: {
             extensions: [".vue", ".png", ".jpg", ".webp"],
