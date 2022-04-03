@@ -1,64 +1,61 @@
 <template>
-    <el-select
+    <el-cascader
         :value="value"
-        @input="$emit('input', $event)"
+        :options="options"
+        :props="{ expandTrigger: 'hover', emitPath: false }"
         placeholder="角色"
+        :show-all-levels="false"
         size="small"
+        style="width: 100%"
+        @change="$emit('input', $event)"
     >
-        <el-option-group
-            v-for="(group, elementName) in characterByElement"
-            :key="elementName"
-            :label="element2Chs(elementName)"
-        >
-            <el-option
-                v-for="character in group"
-                :key="character.name"
-                :label="character.chs"
-                :value="character.name"
-            >
-                <div class="option-item flex-row">
-                    <img :src="character.avatar">
-                    <span :style="{ color: getColor(character.star) }">{{ character.chs }}</span>
-                </div>
-            </el-option>
-        </el-option-group>
-    </el-select>
+        <template slot-scope="{ node, data }">
+            <div v-if="!node.isLeaf">
+                <span>{{ data.label }}</span>
+            </div>
+            <div v-else class="option-item flex-row">
+                <img :src="data.avatar">
+                <span :style="{ color: data.color }">{{ data.label }}</span>
+            </div>
+        </template>
+    </el-cascader>
 </template>
 
 <script>
 import { characterByElement } from "@character";
 import qualityColors from "@const/quality_colors";
 
+const element2Label = Object.freeze({
+    "Pyro": "火",
+    "Cryo": "冰",
+    "Dendro": "草",
+    "Electro": "雷",
+    "Anemo": "风",
+    "Geo": "岩",
+    "Hydro": "水",
+})
+
 export default {
     name: "SelectCharacter",
     props: ["value"],
-    created() {
-        this.characterByElement = characterByElement;
-    },
-    methods: {
-        element2Chs(element) {
-            switch(element) {
-                case "Pyro":
-                    return "火";
-                case "Cryo":
-                    return "冰";
-                case "Dendro":
-                    return "草";
-                case "Electro":
-                    return "雷";
-                case "Anemo":
-                    return "风";
-                case "Geo":
-                    return "岩";
-                case "Hydro":
-                    return "水";
+    computed: {
+        options() {
+            const options = []
+            for (const element in characterByElement) {
+                options.push({
+                    label: element2Label[element],
+                    value: element,
+                    children: characterByElement[element].map(character => ({
+                        label: character.chs,
+                        value: character.name,
+                        avatar: character.avatar,
+                        color: qualityColors[character.star - 1],
+                    }))
+                })
             }
+            return options
         },
-
-        getColor(star) {
-            return qualityColors[star - 1];
-        }
-    }
+    },
 }
 </script>
 
