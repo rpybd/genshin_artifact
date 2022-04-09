@@ -51,3 +51,14 @@ console.log(`／ ￣￣ ＼
 /  |       \\ \\
 |  |        | |
 |    |               | |`);
+
+// unregister service worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations()
+        .then((registrations) => {
+            for (let registration of registrations) {
+                console.log('unregister', registration);
+                registration.unregister();
+            }
+        });
+}
