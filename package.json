@@ -3,9 +3,9 @@
   "version": "5.1.0",
   "private": true,
   "scripts": {
-    "serve": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service serve",
-    "build": "cross-env MONA_TITLE=莫娜占卜铺 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=false MONA_ROUTE_MODE=hash vue-cli-service build",
-    "build:gh": "cross-env PUBLIC_PATH=/genshin_artifact/ MONA_TITLE=莫娜占卜铺·改 MONA_NEED_BEIAN=false MONA_NEED_MIGRATE=true MONA_ROUTE_MODE=hash vue-cli-service build",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "build:gh": "cross-env MONA_ENV=github_page vue-cli-service build",
     "deploy:gh": "npm run build:gh && node ./script/deploy_gh.js",
     "lint": "vue-cli-service lint",
     "build:1": "cross-env MONA_TITLE=原神圣遗物工具 MONA_NEED_BEIAN=true MONA_BEIAN_NUMBER=1 MONA_NEED_MIGRATE=true MONA_ROUTE_MODE=hash vue-cli-service build",
