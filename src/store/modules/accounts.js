@@ -1,6 +1,7 @@
 let nextId = 2;
 
 function initNextId(allAccounts) {
+    nextId = 0;
     for (const {id} of allAccounts) {
         nextId = Math.max(nextId, id);
     }
@@ -17,8 +18,8 @@ const accounts = {
     },
     mutations: {
         set(state, payload) {
-            state.currentAccountId = payload.currentAccountId;
             state.allAccounts = payload.allAccounts;
+            state.currentAccountId = payload.currentAccountId;
             initNextId(state.allAccounts);
         },
 

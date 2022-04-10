@@ -292,7 +292,7 @@
                             v-if="miscCurrentPresetName"
                             type="primary"
                             size="mini"
-                            icon="el-icon-caret-right"
+                            icon="el-icon-folder-checked"
                             :disabled="!presetDirty"
                             @click="handleSavePreset(miscCurrentPresetName)"
                         >保存预设「{{ miscCurrentPresetName }}」</el-button>

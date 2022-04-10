@@ -1,6 +1,7 @@
 import Vuex from "vuex";
 import Vue from "vue";
-import localforage from "localforage";
+
+import backend from "./backend";
 
 import accounts from "./modules/accounts";
 import artifacts from "./modules/artifact";
@@ -19,32 +20,58 @@ const VERSION_STORAGE = 1;
 
 Vue.use(Vuex);
 
-let loadingAccountData = false;
-
 function setTimeoutPromise(ms) {
     return new Promise(resolve => {
         setTimeout(resolve, ms);
     });
 }
 
+const updateBackendPlugin = store => {
+    store.subscribe(async ({ type }, state) => {
+        const [module, mut] = type.split('/');
+        if (!mut || mut === 'set') {
+            return;
+        }
+        const id = state.accounts.currentAccountId;
+        const key = module === 'accounts' ? 'mona_accounts' : `mona_account_${module}_${id}`;
+        let value = state[module];
+        if (module === 'presets') {
+            value = value['presets'];
+        }
+        // console.log('update', key, JSON.stringify(value));
+        await backend.setItem(key, value);
+    });
+};
+
 const _store = new Vuex.Store({
+    state: {
+        syncFile: false,
+    },
     modules: {
         accounts,
         artifacts,
         presets,
         kumi,
     },
+    getters: {
+        syncFile(state) {
+            return state.syncFile;
+        }
+    },
+    mutations: {
+        setSyncFile(state, syncFile) {
+            state.syncFile = syncFile;
+        },
+    },
     actions: {
         async loadAccountData({ commit, state }) {
-            loadingAccountData = true;
             const id = state.accounts.currentAccountId;
             const artKey = `mona_account_artifacts_${id}`;
-            commit('artifacts/set', await localforage.getItem(artKey));
+            commit('artifacts/set', await backend.getItem(artKey));
             const presetKey = `mona_account_presets_${id}`;
-            commit('presets/set', await localforage.getItem(presetKey));
+            commit('presets/set', await backend.getItem(presetKey));
             const kumiKey = `mona_account_kumi_${id}`;
-            commit('kumi/set', await localforage.getItem(kumiKey));
-            loadingAccountData = false;
+            commit('kumi/set', await backend.getItem(kumiKey));
         },
         async changeAccount({ dispatch, commit }, { id }) {
             await setTimeoutPromise(50);
@@ -58,18 +85,26 @@ const _store = new Vuex.Store({
             }
             commit('accounts/deleteAccount', { id });
             const artKey = `mona_account_artifacts_${id}`;
-            await localforage.removeItem(artKey);
+            await backend.removeItem(artKey);
             const presetKey = `mona_account_presets_${id}`;
-            await localforage.removeItem(presetKey);
+            await backend.removeItem(presetKey);
             const kumiKey = `mona_account_kumi_${id}`;
-            await localforage.removeItem(kumiKey);
+            await backend.removeItem(kumiKey);
+        },
+        async reload({ dispatch, commit }) {
+            const payload = await backend.getItem('mona_accounts');
+            commit('accounts/set', payload);
+            await dispatch('loadAccountData');
         }
-    }
+    },
+    plugins: [
+        updateBackendPlugin
+    ],
 });
 
 async function init_store() {
     // init from localStorage
-    let metaData = await localforage.getItem('mona_meta');
+    let metaData = await backend.getItem('mona_meta');
     if (!metaData) {
         // load old data
         _store.commit('artifacts/oldInit');
@@ -79,82 +114,14 @@ async function init_store() {
         metaData = {
             version: VERSION_STORAGE,
         };
-        await localforage.setItem('mona_meta', metaData);
+        await backend.setItem('mona_meta', metaData);
     } else {
         if (metaData.version !== VERSION_STORAGE) {
             // update local storage here
         } else {
-            const payload = await localforage.getItem('mona_accounts');
-            _store.commit('accounts/set', payload);
-            _store.dispatch('loadAccountData');
+            await _store.dispatch('reload');
         }
     }
-
-    // watch accounts change
-    _store.watch(
-        state => state.accounts,
-        async newValue => {
-            await localforage.setItem('mona_accounts', newValue);
-        },
-        {
-            deep: true,
-            immediate: true,
-        }
-    );
-
-    // watch artifacts change
-    _store.watch(
-        state => ({
-            flower: state.artifacts.flower,
-            feather: state.artifacts.feather,
-            sand: state.artifacts.sand,
-            cup: state.artifacts.cup,
-            head: state.artifacts.head,
-        }),
-        async newValue => {
-            if (loadingAccountData) {
-                return;
-            }
-            const key = `mona_account_artifacts_${_store.state.accounts.currentAccountId}`;
-            await localforage.setItem(key, newValue);
-        },
-        {
-            deep: true,
-            immediate: true,
-        },
-    );
-
-    // watch presets change
-    _store.watch(
-        state => state.presets.presets,
-        async newValue => {
-            if (loadingAccountData) {
-                return;
-            }
-            const key = `mona_account_presets_${_store.state.accounts.currentAccountId}`;
-            await localforage.setItem(key, newValue);
-        },
-        {
-            deep: true,
-            immediate: true,
-        }
-    )
-
-    // watch kumi change
-    _store.watch(
-        state => state.kumi,
-        async newValue => {
-            if (loadingAccountData) {
-                return;
-            }
-            const key = `mona_account_kumi_${_store.state.accounts.currentAccountId}`;
-            await localforage.setItem(key, newValue);
-        },
-        {
-            deep: true,
-            immediate: true,
-        }
-    );
 }
 
 init_store();

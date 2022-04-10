@@ -18,6 +18,8 @@
                 <el-menu-item index="/accounts">
                     <i class="el-icon-user-solid"></i>
                     账号（{{ currentAccountName }}）
+                    <i v-if="syncFile" class="el-icon-document-checked"></i>
+                    <i v-else class="el-icon-document-delete"></i>
                 </el-menu-item>
                 <el-menu-item index="/artifacts">
                     <i class="el-icon-s-help"></i>
@@ -140,6 +142,7 @@ export default {
         }
     },
     computed: {
+        ...mapGetters(["syncFile"]),
         ...mapGetters("accounts", ["currentAccountName"]),
     }
 }

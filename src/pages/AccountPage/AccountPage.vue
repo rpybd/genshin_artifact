@@ -1,9 +1,51 @@
 <template>
     <div>
-        <el-breadcrumb>
+        <!-- <el-breadcrumb>
             <el-breadcrumb-item>账号</el-breadcrumb-item>
         </el-breadcrumb>
-        <el-divider></el-divider>
+        <el-divider></el-divider> -->
+
+        <el-dialog
+            title="选择同步基准"
+            width="30%"
+            :visible.sync="showSyncDialog"
+        >
+            <div>
+                <el-button
+                    v-if="localMeta"
+                    @click="selectSyncType('local')"
+                >
+                    浏览器存储（最后修改于{{ new Date(localMeta.lastModified).toLocaleString() }}）
+                </el-button>
+            </div>
+            <div>
+                <el-button
+                    v-if="fileMeta"
+                    @click="selectSyncType('file')"
+                >
+                    本地目录存储（最后修改于{{ new Date(fileMeta.lastModified).toLocaleString() }}）
+                </el-button>
+            </div>
+        </el-dialog>
+
+        <div class="top-things">
+            <el-row>
+                <el-col :span="6">
+                    <span>账号</span>
+                </el-col>
+                <el-col :span="18">
+                    <div style="float: right">
+                        <el-button
+                            type="primary"
+                            size="mini"
+                            icon="el-icon-sort"
+                            @click="handleSync"
+                        >同步本地目录</el-button>
+                    </div>
+                </el-col>
+            </el-row>
+            <el-divider></el-divider>
+        </div>
 
         <div class="toolbar">
             <el-button
@@ -65,6 +107,7 @@
 
 <script>
 import { mapState } from "vuex";
+import storeBackend from "@/store/backend";
 
 import ClickEditLabel from "@c/misc/ClickEditLabel";
 
@@ -72,6 +115,14 @@ export default {
     name: "AccountPage",
     components: {
         ClickEditLabel,
+    },
+    data() {
+        return {
+            showSyncDialog: false,
+            localMeta: null,
+            fileMeta: null,
+            selectSyncType: null,
+        };
     },
     created() {
         this.canCopy = !!navigator.clipboard;
@@ -111,6 +162,31 @@ export default {
                 this.$store.commit('accounts/changeAccountName', { id, name: newName });
             }
         },
+        handleSync() {
+            storeBackend.prompt()
+                .then(([localMeta, fileMeta]) => new Promise((resolve, reject) => {
+                    if (!fileMeta) {
+                        resolve('local');
+                        return;
+                    }
+                    if (localMeta.lastModified === fileMeta.lastModified) {
+                        resolve('');
+                        return;
+                    }
+                    this.localMeta = localMeta;
+                    this.fileMeta = fileMeta;
+                    this.selectSyncType = (type) => {
+                        this.showSyncDialog = false;
+                        resolve(type);
+                    };
+                    this.showSyncDialog = true;
+                }))
+                .then(type => storeBackend.sync(type))
+                .then(() => this.$store.dispatch('reload'))
+                .then(() => {
+                    this.$store.commit('setSyncFile', true);
+                });
+        }
     },
 }
 </script>
