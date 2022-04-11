@@ -33,12 +33,23 @@ class FileBackend {
     }
 
     async prompt() {
+        if (this.dirHandle !== null) {
+            return true;
+        }
         try {
             this.dirHandle = await window.showDirectoryPicker();
             return true;
         } catch (err) {
             return false;
         }
+    }
+
+    cancel() {
+        this.dirHandle = null;
+    }
+
+    available() {
+        return this.dirHandle !== null;
     }
 
     async clear() {
@@ -106,6 +117,20 @@ class FileBackend {
     }
 }
 
+function isWindowActive() {
+    return new Promise((resolve, reject) => {
+        let animeHandle, timeoutHandle;
+        animeHandle = window.requestAnimationFrame(() => {
+            window.clearTimeout(timeoutHandle);
+            resolve(true);
+        });
+        timeoutHandle = window.setTimeout(() => {
+            window.cancelAnimationFrame(animeHandle);
+            resolve(false);
+        }, 50);
+    });
+}
+
 const BACKEND_META_KEY = 'backend_meta';
 const BACKEND_VERSION = 1;
 
@@ -113,6 +138,11 @@ class MixedBackend {
     constructor() {
         this.fileBackend = new FileBackend();
         this.localBackend = new LocalBackend();
+        this.callbacks = {};
+    }
+
+    on(event, callback) {
+        this.callbacks[event] = callback;
     }
 
     async prompt() {
@@ -142,34 +172,46 @@ class MixedBackend {
         }
     }
 
-    // async sync() {
-    //     const defaultMeta = {
-    //         version: 0,
-    //         lastModified: 0,
-    //     };
-    //     const localMeta = (await this.localBackend.getItem(BACKEND_META_KEY)) ?? defaultMeta;
-    //     const fileMeta = (await this.fileBackend.getItem(BACKEND_META_KEY)) ?? defaultMeta;
-    //     // TODO: update version if needed
-
-    //     // use the newer one to cover the older one
-    //     if (localMeta.lastModified > fileMeta.lastModified) {
-    //         const items = await this.localBackend.getAllItem();
-    //         await Promise.all(items.map(([key, value]) => this.fileBackend.setItem(key, value)));
-    //     } else if (localMeta.lastModified < fileMeta.lastModified) {
-    //         const items = await this.fileBackend.getAllItem();
-    //         await Promise.all(items.map(([key, value]) => this.localBackend.setItem(key, value)));
-    //     } else if (localMeta.version === 0 && fileMeta.version === 0) {
-    //         const meta = this.getMeta();
-    //         await this.localBackend.setItem(BACKEND_META_KEY, meta);
-    //         await this.fileBackend.setItem(BACKEND_META_KEY, meta);
+    // startConsistencyCheck() {
+    //     if (this.consistencyCheckHandle) {
+    //         return;
     //     }
+    //     this.consistencyCheckHandle = window.setInterval(async () => {
+    //         if (await isWindowActive()) {
+    //             this.checkFileUpdate();
+    //         }
+    //     }, 5000);
     // }
+
+    async checkFileUpdate() {
+        if (!this.fileBackend.available()) {
+            return;
+        }
+        const localMeta = await this.localBackend.getItem(BACKEND_META_KEY);
+        const fileMeta = await this.fileBackend.getItem(BACKEND_META_KEY);
+        if (localMeta.version === fileMeta.version && localMeta.lastModified === fileMeta.lastModified) {
+            return;
+        }
+        alert('本地目录与浏览器存储状态不一致，已停止与本地目录同步。\n你可以手动重新同步。');
+        this.fileBackend.cancel();
+        const cb = this.callbacks['cancelFileBackend'];
+        if (cb) {
+            cb();
+        }
+        // TODO: check version
+        // if (localMeta.lastModified > fileMeta.lastModified) {
+        // } else {
+        //     alert('检测到本地目录有更新，将更新网页状态，或立刻刷新然后手动重新同步');
+        //     await this.sync('file');
+        // }
+    }
 
     async getItem(key) {
         return await this.localBackend.getItem(key);
     }
 
     async setItem(key, value) {
+        await this.checkFileUpdate();
         const meta = this.getMeta();
         await this.localBackend.setItem(key, value);
         await this.localBackend.setItem(BACKEND_META_KEY, meta);
@@ -178,6 +220,7 @@ class MixedBackend {
     }
 
     async removeItem(key) {
+        await this.checkFileUpdate();
         const meta = this.getMeta();
         await this.localBackend.removeItem(key);
         await this.localBackend.setItem(BACKEND_META_KEY, meta);

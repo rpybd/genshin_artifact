@@ -27,6 +27,10 @@ function setTimeoutPromise(ms) {
 }
 
 const updateBackendPlugin = store => {
+    backend.on('cancelFileBackend', () => {
+        store.commit('setSyncFile', false);
+    });
+
     store.subscribe(async ({ type }, state) => {
         const [module, mut] = type.split('/');
         if (!mut || mut === 'set') {

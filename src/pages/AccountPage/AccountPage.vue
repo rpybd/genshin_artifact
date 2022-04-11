@@ -9,6 +9,7 @@
             title="选择同步基准"
             width="30%"
             :visible.sync="showSyncDialog"
+            @closed="handleSyncDialogClosed"
         >
             <div>
                 <el-button
@@ -39,8 +40,9 @@
                             type="primary"
                             size="mini"
                             icon="el-icon-sort"
+                            :disabled="syncFile"
                             @click="handleSync"
-                        >同步本地目录</el-button>
+                        >{{ syncFile ? '已' : '' }}同步本地目录</el-button>
                     </div>
                 </el-col>
             </el-row>
@@ -122,12 +124,14 @@ export default {
             localMeta: null,
             fileMeta: null,
             selectSyncType: null,
+            handleSyncDialogClosed: null,
         };
     },
     created() {
         this.canCopy = !!navigator.clipboard;
     },
     computed: {
+        ...mapState(['syncFile']),
         ...mapState("accounts", ["currentAccountId", "allAccounts"]),
     },
     methods: {
@@ -175,10 +179,18 @@ export default {
                     }
                     this.localMeta = localMeta;
                     this.fileMeta = fileMeta;
+                    let resolved = false;
                     this.selectSyncType = (type) => {
+                        resolved = true;
                         this.showSyncDialog = false;
                         resolve(type);
                     };
+                    this.handleSyncDialogClosed = () => {
+                        if (!resolved) {
+                            storeBackend.fileBackend.dirHandle = null;
+                            reject(Error('user canceled'));
+                        }
+                    }
                     this.showSyncDialog = true;
                 }))
                 .then(type => storeBackend.sync(type))
