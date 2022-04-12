@@ -79,6 +79,7 @@ pub struct OptimizeArtifactInterface {
     pub buffs: Vec<BuffInterface>,
     #[serde(default)]
     pub algorithm: SingleOptimizeAlgorithmName,
+    #[serde(default)]
     pub max_result_num: usize,
 }
 
