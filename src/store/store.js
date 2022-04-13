@@ -1,5 +1,6 @@
 import Vuex from "vuex";
 import Vue from "vue";
+import debounced from "lodash/debounce";
 
 import backend from "./backend";
 
@@ -31,7 +32,12 @@ const updateBackendPlugin = store => {
         store.commit('setSyncFile', false);
     });
 
-    store.subscribe(async ({ type }, state) => {
+    const debouncedSetItemByKey = {};
+    function debouncedSetItem(key, value) {
+        const func = (debouncedSetItemByKey[key] ??= debounced(value => backend.setItem(key, value), 100));
+        func(value);
+    }
+    store.subscribe(({ type }, state) => {
         const [module, mut] = type.split('/');
         if (!mut || mut === 'set') {
             return;
@@ -43,7 +49,7 @@ const updateBackendPlugin = store => {
             value = value['presets'];
         }
         // console.log('update', key, JSON.stringify(value));
-        await backend.setItem(key, value);
+        debouncedSetItem(key, value);
     });
 };
 
@@ -78,7 +84,7 @@ const _store = new Vuex.Store({
             commit('kumi/set', await backend.getItem(kumiKey));
         },
         async changeAccount({ dispatch, commit }, { id }) {
-            await setTimeoutPromise(50);
+            await setTimeoutPromise(200);
             commit('accounts/setCurrentAccountId', { id });
             await dispatch('loadAccountData');
         },

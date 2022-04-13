@@ -218,17 +218,17 @@ export async function importMonaJson(rawObj, removeNonExisting) {
 
     let removeCount = 0
     if (removeNonExisting) {
-        for (let originalArtifacts of Object.values(hashAll)) {
-            const id = originalArtifacts.id
+        for (let originalArtifact of Object.values(hashAll)) {
+            const id = originalArtifact.id
             if (!existingIds.has(id)) {
                 removeCount += 1
-                console.log("remove", originalArtifacts)
+                console.log("remove", JSON.stringify(originalArtifact))
                 removeArtifact(id)
             }
         }
     }
 
-    console.log(`import result: skip${skipCount}, upgrade${upgradeCount}, new${newCount}, remove${removeCount}`)
+    console.log(`import result: skip ${skipCount}, upgrade ${upgradeCount}, new ${newCount}, remove ${removeCount}`)
 }
 
 export function getArtifactThumbnail(name) {
