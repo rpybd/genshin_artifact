@@ -4,6 +4,8 @@ import VueRouter from "vue-router"
 import NewArtifactPlanPage from "@page/NewArtifactPlanPage"
 import TeamOptimizationPage from "@page/TeamOptimizationPage"
 import NewArtifactPotentialPage from "@page/NewArtifactPotentialPage"
+import CharacterDBPage from "@page/CharacterDBPage"
+import CharacterInfo from "@page/CharacterDBPage/CharacterInfo"
 
 const IntroPage = () => ({
     component: import(/* webpackChunkName: "intro-page" */ "@page/about/IntroPage"),
@@ -15,36 +17,11 @@ const ArtifactsPage = () => ({
     loading: LoadingComponent,
     error: ErrorComponent,
 });
-// const ArtifactsPlanPage = () => ({
-//     component: import(/* webpackChunkName: "artifacts-plan-page" */ "@page/ArtifactsPlanPage"),
-//     loading: LoadingComponent,
-//     error: ErrorComponent,
-// });
-// const ChangeLogPage = () => ({
-//     component: import(/* webpackChunkName: "about-page" */ "@page/about/ChangeLogPage"),
-//     loading: LoadingComponent,
-//     error: ErrorComponent,
-// });
-// const AlgorithmPage = () => ({
-//     component: import(/* webpackChunkName: "about-page" */ "@page/about/AlgorithmPage"),
-//     loading: LoadingComponent,
-//     error: ErrorComponent,
-// });
 const ExternalLinkPage = () => ({
     component: import(/* webpackChunkName: "about-page" */ "@page/about/ExternalLinkPage"),
     loading: LoadingComponent,
     error: ErrorComponent,
 });
-// const ArtifactPotentialPage = () => ({
-//     component: import(/* webpackChunkName: "artifact-potential-page" */ "@page/ArtifactPotentialPage"),
-//     loading: LoadingComponent,
-//     error: ErrorComponent,
-// });
-// const PotentialFuncPage = () => ({
-//     component: import(/* webpackChunkName: "about-page" */ "@page/about/PotentialFuncPage"),
-//     loading: LoadingComponent,
-//     error: ErrorComponent,
-// });
 const CharacterPresetsPage = () => (
     {
         component: import(/* webpackChunkName: "character-presets-page" */ "@page/CharacterPresetsPage"),
@@ -52,15 +29,8 @@ const CharacterPresetsPage = () => (
         error: ErrorComponent,
     }
 );
-// const HelpBasicPage = () => ({
-//     component: import(/* webpackChunkName: "help-page" */ "@page/helps/HelpBasicPage"),
-//     loading: LoadingComponent,
-//     error: ErrorComponent,
-// });
 const FAQPage = () => import(/* webpackChunkName: "help-page" */ "@page/helps/FAQPage");
-// const TargetFuncExplanationPage = () => import(/* webpackChunkName: "help-page" */ "@page/helps/TargetFuncExplanationPage");
 const ExportToolPage = () => import(/* webpackChunkName: "help-page" */ "@page/helps/ExportToolPage");
-// const ArtifactsStatisticsPage = () => import(/* webpackChunkName: "artifacts-statistics-page" */ "@page/ArtifactsStatisticsPage");
 const KumiPage = () => import (/* webpackChunkName: "kumi-page" */ "@page/KumiPage");
 const AccountPage = () => import (/* webpackChunkName: "account-page" */ "@page/AccountPage");
 
@@ -69,10 +39,27 @@ const webName = process.env.MONA_TITLE;
 
 const routes = [
     {
+        path: "/character",
+        component: CharacterDBPage,
+        meta: {
+            title: "角色",
+            keepAlive: true
+        },
+        children: [
+            {
+                path: ":name",
+                component: CharacterInfo,
+                meta: {
+                    title: "角色"
+                }
+            },
+        ]
+    },
+    {
         path: "/team-optimization",
         component: TeamOptimizationPage,
         meta: {
-            title: "整队优化 | " + webName,
+            title: "整队优化",
             keepAlive: true,
         }
     },
@@ -87,7 +74,7 @@ const routes = [
         path: "/artifacts-kumi",
         component: KumiPage,
         meta: {
-            title: "圣遗物套装 | " + webName,
+            title: "圣遗物套装",
             keepAlive: true,
         }
     },
@@ -103,28 +90,14 @@ const routes = [
         path: "/help/export-tools",
         component: ExportToolPage,
         meta: {
-            title: "导出工具汇总 | 帮助 | " + webName,
+            title: "导出工具汇总",
         }
     },
-    // {
-    //     path: "/help/target-func-explanation",
-    //     component: TargetFuncExplanationPage,
-    //     meta: {
-    //         title: "目标函数参数说明 | 帮助 | " + webName,
-    //     }
-    // },
-    // {
-    //     path: "/help/basic",
-    //     component: HelpBasicPage,
-    //     meta: {
-    //         title: "基本使用 | 帮助 | " + webName,
-    //     }
-    // },
     {
         path: "/help/faq",
         component: FAQPage,
         meta: {
-            title: "FAQ | 帮助 | " + webName,
+            title: "FAQ",
         }
     },
     {
@@ -132,7 +105,7 @@ const routes = [
         component: IntroPage,
         alias: "/",
         meta: {
-            title: "首页 | " + webName,
+            title: "首页",
         }
     },
     {
@@ -140,7 +113,7 @@ const routes = [
         component: ArtifactsPage,
         meta: {
             keepAlive: true,
-            title: "圣遗物 | " + webName,
+            title: "圣遗物",
         }
     },
     {
@@ -148,14 +121,14 @@ const routes = [
         component: NewArtifactPlanPage,
         meta: {
             keepAlive: true,
-            title: "星命定轨 | " + webName,
+            title: "星命定轨",
         }
     },
     {
         path: "/tomodachi",
         component: ExternalLinkPage,
         meta: {
-            title: "友情链接 | " + webName,
+            title: "友情链接",
         }
     },
     {
@@ -164,7 +137,7 @@ const routes = [
         component: NewArtifactPotentialPage,
         meta: {
             keepAlive: true,
-            title: "圣遗物潜力 | " + webName,
+            title: "圣遗物潜力",
         }
     },
     {
@@ -172,9 +145,9 @@ const routes = [
         component: CharacterPresetsPage,
         meta: {
             keepAlive: true,
-            title: "计算预设 | " + webName,
+            title: "计算预设",
         }
-    }
+    },
 ]
 
 const router = new VueRouter({
@@ -186,6 +159,10 @@ router.beforeEach((to, from, next) => {
     if (to.meta.title) {
         document.title = to.meta.title;
     }
+
+    const title = to.meta.title
+    document.title = `${title} | ${webName}`
+
     next();
 });
 

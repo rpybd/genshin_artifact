@@ -43,6 +43,18 @@ const customEnv = getEnv()
 
 module.exports = {
     publicPath: customEnv.PUBLIC_PATH || '/',
+    devServer: {
+        proxy: {
+            "^/api/compute_result/analysis": {
+                target: "http://localhost:8000"
+                // target: "https://www.mona-uranai.com/"
+            },
+            "^/api": {
+                target: "http://localhost:8000/",
+                changeOrigin: true
+            }
+        }
+    },
     configureWebpack: {
         resolve: {
             extensions: [".vue", ".png", ".jpg", ".webp"],
@@ -69,7 +81,7 @@ module.exports = {
                 // "genshin_panel": path.resolve(__dirname, "../../ts/genshin/dist"),
             }
         },
-        externals: {
+        externals: process.env.NODE_ENV === "development" ? {} : {
             vue: "Vue",
             "vue-router": "VueRouter",
             vuex: "Vuex",

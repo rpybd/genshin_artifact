@@ -7,7 +7,7 @@
 
         <el-dialog
             title="选择圣遗物"
-            width="80%"
+            :width="deviceIsPC ? '80%' : '90%'"
             :visible.sync="showSelectArtifactDialog"
         >
             <select-artifact
@@ -20,7 +20,7 @@
         <el-dialog
             :visible.sync="showDamageAnalysisDialog"
             title="伤害构成"
-            width="60%"
+            :width="deviceIsPC ? '60%' : '90%'"
         >
             <damage-analysis
                 ref="damageAnalysis"
@@ -32,7 +32,7 @@
         <el-dialog
             :visible.sync="showSelectBuffDialog"
             title="选择BUFF"
-            width="60%"
+            :width="deviceIsPC ? '60%' : '90%'"
         >
             <select-buff
                 @select="handleSelectBuff"
@@ -208,7 +208,7 @@
         <el-dialog
             :visible.sync="showArtifactPerBonusDialog"
             title="词条收益曲线"
-            width="80%"
+            :width="deviceIsPC ? '80%' : '90%'"
         >
             <artifact-per-stat-bonus
                 :data="miscPerStatBonus"
@@ -218,7 +218,7 @@
         <el-dialog
             :visible.sync="showSaveKumiDialog"
             title="新建圣遗物组"
-            width="60%"
+            :width="deviceIsPC ? '60%' : '90%'"
         >
             <save-as-kumi
                 :default-name="kumiDefaultName"
@@ -229,7 +229,7 @@
         <el-dialog
             :visible.sync="showUseKumiDialog"
             title="选择圣遗物组"
-            width="60%"
+            :width="deviceIsPC ? '60%' : '90%'"
         >
             <div style="height: 60vh" class="mona-scroll">
                 <el-tree
@@ -243,7 +243,7 @@
         <el-dialog
             :visible.sync="showEnemyConfigDialog"
             title="敌人设置"
-            width="60%"
+            :width="deviceIsPC ? '60%' : '90%'"
         >
             <enemy-config
                 v-model="enemyConfig"
@@ -253,7 +253,7 @@
         <el-dialog
             :visible.sync="showConfigArtifactDialog"
             title="圣遗物设置"
-            width="60%"
+            :width="deviceIsPC ? '60%' : '90%'"
         >
             <h3 class="common-title2">圣遗物特效模式</h3>
             <el-radio-group
@@ -320,10 +320,8 @@
             <el-divider></el-divider>
         </div>
 
-        <el-row class="big-container" ref="bigContainer"
-            :style="{ height: miscBigContainerHeight }"
-        >
-            <el-col class="left-container" :span="6">
+        <el-row class="big-container" ref="bigContainer">
+            <el-col class="left-container mona-scroll-hidden" :sm="24" :md="6">
                 <div class="config-character">
                     <img :src="characterSplash" class="character-splash" />
                     <div class="select-character">
@@ -693,6 +691,8 @@ import {buffData} from "@buff"
 import {artifactsData} from "@artifact"
 import {wasmBonusPerStat} from "@/wasm"
 import {wasmSingleOptimize} from "@/wasm/single_optimize"
+import { createComputeResult } from "@/api/misc"
+import { deviceIsPC } from "@util/device"
 
 import SelectArtifact from "@c/select/SelectArtifact"
 import SelectArtifactSet from "@c/select/SelectArtifactSet"
@@ -767,22 +767,14 @@ export default {
     created() {
         // this.characterData = characterData
     },
-    mounted() {
-        const container = this.$refs["bigContainer"]
-        const top = this.$refs["topThings"]
-
-        const heightTop = top.offsetHeight + 24
-        // console.log(heightTop)
-        // container.style.height = `calc(100% - ${heightTop}px)`
-        this.miscBigContainerHeight = `calc(100% - ${heightTop}px)`
-        // console.log(container.style.height)
-    },
     data () {
         const artifactGroups = [
             getGroupDefault(),
             getGroupDefault(),
         ]
         return {
+            deviceIsPC,
+
             characterName: "Amber",
             characterLevel: "90",
             characterConfig: "NoConfig",
@@ -852,7 +844,6 @@ export default {
             showEnemyConfigDialog: false,
             showConfigArtifactDialog: false,
 
-            miscBigContainerHeight: "",
             miscPerStatBonus: {},
             miscCurrentPresetName: null,
 
@@ -1551,6 +1542,37 @@ export default {
                 }
                 this.optimizationResults = results
                 this.handleUseNthOptimizationResult(1)
+
+                // report best result to server, only report player whose 20 artifacts count is above 100
+                if (this.$store.getters["artifacts/twentyCount"] >= 100) {
+                    const characterInterface = this.characterInterface
+                    const weaponInterface = this.weaponInterface
+                    const buffsInterface = this.buffsInterface
+                    const targetFunctionInterface = this.targetFunctionInterface
+
+                    let result_artifacts_wasm_format = []
+                    let first_result = results[0]
+                    result_artifacts_wasm_format.push(first_result.flower)
+                    result_artifacts_wasm_format.push(first_result.feather)
+                    result_artifacts_wasm_format.push(first_result.sand)
+                    result_artifacts_wasm_format.push(first_result.goblet)
+                    result_artifacts_wasm_format.push(first_result.head)
+                    result_artifacts_wasm_format = result_artifacts_wasm_format
+                        .filter(v => v !== null && v !== undefined)
+                        .map(id => this.artifactsById[id])
+                        .filter(a => !!a)
+                        .map(a => convertArtifact(a))
+                    // console.log(result_artifacts_wasm_format)
+
+                    // the return value can be omitted, because there's nothing valuable
+                    createComputeResult(
+                        characterInterface,
+                        weaponInterface,
+                        buffsInterface,
+                        targetFunctionInterface,
+                        result_artifacts_wasm_format
+                    )
+                }
             }).catch(e => {
                 this.$message.error(e)
             }).finally(() => {
@@ -1827,37 +1849,19 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-//.outer-container {
-//    display: flex;
-//    flex-direction: column;
-//    height: 100%;
-//}
-
 .big-container {
-    //flex: 1;
-    //flex-grow: 1;
-    //overflow-y: hidden;
-    //overflow-x: visible;
-    //overflow-x: visible;
-    //overflow: hidden;
-
-    .left-container, .middle-container, .right-container {
-        height: 100%;
-        overflow-x: hidden;
-        overflow-y: auto;
-        //overflow: visible;
-
-        &::-webkit-scrollbar {
-            width: 4px;
+    @media only screen and (min-width: 992px) {
+        .left-container, .middle-container, .right-container {
+            height: calc(100vh - 24px * 2);
         }
 
-        &::-webkit-scrollbar-track {
-            background: rgb(247, 247, 247);
-            border-radius: 2px;
+        .left-container {
+            padding-right: 12px;
         }
 
-        &::-webkit-scrollbar-thumb {
-            background: #d4d4d4;
+        .middle-container {
+            padding-left: 12px;
+            padding-right: 12px;
         }
     }
 
@@ -1872,53 +1876,59 @@ export default {
         padding-left: 12px;
         padding-right: 12px;
 
-        // overflow-y: auto;
-        // overflow-x: hidden;
+        .right-container {
+            // flex: 1;
+            padding-left: 12px;
+            padding-right: 12px;
+            // overflow-y: auto;
+            // overflow-x: hidden;
+        }
     }
 
-    .right-container {
-        // flex: 1;
-        padding-left: 12px;
-        padding-right: 12px;
-        // overflow-y: auto;
-        // overflow-x: hidden;
+    @media only screen and (max-width: 992px) {
+        .left-container, .middle-container {
+            margin-bottom: 12px;
+        }
     }
 }
 
 .middle-container {
     .artifacts {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        align-items: center;
+        //display: flex;
+        gap: 4px;
+        //flex-wrap: wrap;
+        //align-items: center;
+
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-auto-rows: minmax(64px, max-content);
 
         .artifact-item-or-button {
-
+            .add-button {
+                width: 100%;
+                height: 100%;
+            }
+            .artifact-display {
+                width: 100%;
+                box-sizing: border-box;
+            }
         }
     }
 }
 
 .config-character {
-    // padding: 16px;
-    // position: relative;
+    //overflow: visible;
+    //position: relative;
 
     .character-splash {
         position: absolute;
         width: 400px;
         opacity: 0.3;
-        // left: -150px;
-        // right: -100px;
-        // top: -32px;
         pointer-events: none;
     }
 
     .character-extra-config {
         margin-top: 16px;
-        // border-left: #222222 solid 3px;
-        // padding: 8px;
-        // background: #12345611;
-        // border-top-right-radius: 3px;
-        // border-bottom-right-radius: 3px;
     }
 
     .config-character-skill {
@@ -1927,10 +1937,6 @@ export default {
             align-items: center;
             gap: 4px;
         }
-    }
-
-    .select-character {
-        // padding-left: 50px;
     }
 }
 
@@ -2022,18 +2028,40 @@ export default {
     }
 
     span {
-        width: 7vw;
+        width: 48px;
         font-size: 0.7rem;
     }
 }
 
-.constraint-min-item {
-    display: flex;
-    align-items: center;
+//@media only screen and (min-width: 992px) {
+//    .constraint-min-item {
+//        display: flex;
+//        align-items: center;
+//
+//        .constraint-min-title {
+//            font-size: 0.7rem;
+//            width: 7vw;
+//        }
+//    }
+//}
+//
+//@media only screen and (max-width: 992px) {
+//    .constraint-min-item {
+//        .constraint-min-title {
+//            font-size: 0.7rem;
+//            display: block;
+//        }
+//    }
+//}
 
+.constraint-min-item {
     .constraint-min-title {
         font-size: 0.7rem;
-        width: 7vw;
+        display: block;
+    }
+
+    .slider-div {
+        width: 100%;
     }
 }
 </style>
