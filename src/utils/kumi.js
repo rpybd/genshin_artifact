@@ -41,6 +41,15 @@ export function newDir(name) {
     store.commit("kumi/newDir", { name: finalName })
 }
 
+export function getDirByName(name) {
+    for (let dir of store.getters['kumi/directories']) {
+        if (dir.title === name) {
+            return dir.id
+        }
+    }
+    return undefined
+}
+
 export function checkName(name) {
     if (name === "" || !name) {
         return {

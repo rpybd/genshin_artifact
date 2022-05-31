@@ -3,6 +3,7 @@ import ErrorComponent from "@c/ErrorComponent"
 import VueRouter from "vue-router"
 import NewArtifactPlanPage from "@page/NewArtifactPlanPage"
 import TeamOptimizationPage from "@page/TeamOptimizationPage"
+import SequentialOptimizationPage from "@page/SequentialOptimizationPage"
 import NewArtifactPotentialPage from "@page/NewArtifactPotentialPage"
 import CharacterDBPage from "@page/CharacterDBPage"
 import CharacterInfo from "@page/CharacterDBPage/CharacterInfo"
@@ -64,6 +65,14 @@ const routes = [
                 }
             },
         ]
+    },
+    {
+        path: "/sequential-optimization",
+        component: SequentialOptimizationPage,
+        meta: {
+            title: "序列优化",
+            keepAlive: true,
+        }
     },
     {
         path: "/team-optimization",

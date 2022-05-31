@@ -43,6 +43,10 @@
                     <i class="el-icon-cpu"></i>
                     计算器
                 </el-menu-item>
+                <el-menu-item index="/sequential-optimization">
+                    <i class="el-icon-s-unfold"></i>
+                    序列优化
+                </el-menu-item>
                 <el-menu-item index="/team-optimization">
                     <i class="el-icon-s-opportunity"></i>
                     多人优化
