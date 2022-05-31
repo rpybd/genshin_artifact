@@ -52,13 +52,14 @@ console.log(`／ ￣￣ ＼
 |  |        | |
 |    |               | |`);
 
-// unregister service worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations()
-        .then((registrations) => {
-            for (let registration of registrations) {
-                console.log('unregister', registration);
-                registration.unregister();
-            }
-        });
-}
+// import { listen, emit } from "@tauri-apps/api/event"
+//
+// (async function () {
+//     const unlisten = await listen("test", event => {
+//         console.log(event)
+//     })
+//
+//     emit("yas-scan", {
+//         min_star: 5
+//     })
+// })()

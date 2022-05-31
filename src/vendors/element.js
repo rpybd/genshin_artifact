@@ -1,4 +1,68 @@
-import Vue from "vue";
+import Vue from "vue"
+
+/// #if !USE_CDN
+import "element-ui/lib/theme-chalk/index.css"
+import "element-ui/lib/theme-chalk/display.css"
+import {
+    Tree,
+    Button,
+    RadioButton,
+    RadioGroup,
+    Radio,
+    Checkbox,
+    Dialog,
+    Input,
+    Select,
+    Option,
+    OptionGroup,
+    Tabs,
+    TabPane,
+    Tag,
+    Alert,
+    Slider,
+    Icon,
+    Row,
+    Col,
+    Card,
+    Collapse,
+    CollapseItem,
+    Container,
+    Aside,
+    Main,
+    Divider,
+    Image,
+    Message,
+    MessageBox,
+    Menu,
+    MenuItem,
+    MenuItemGroup,
+    Breadcrumb,
+    BreadcrumbItem,
+    Loading,
+    Drawer,
+    Timeline,
+    TimelineItem,
+    Switch,
+    InputNumber,
+    Rate,
+    Footer,
+    Pagination,
+    Table,
+    TableColumn,
+    Popconfirm,
+    Popover,
+    Tooltip,
+    Empty,
+    Autocomplete,
+    Dropdown,
+    DropdownMenu,
+    DropdownItem,
+    Skeleton,
+    SkeletonItem,
+    Header,
+    Submenu,
+    CheckboxGroup
+} from "element-ui";
 
 import ElementUi, { Message, MessageBox } from "element-ui";
 
@@ -122,3 +186,4 @@ Vue.prototype.$alert = MessageBox.alert;
 Vue.prototype.$confirm = MessageBox.confirm;
 Vue.prototype.$prompt = MessageBox.prompt;
 Vue.prototype.$message = Message;
+/// #endif

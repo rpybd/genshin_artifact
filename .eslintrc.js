@@ -27,5 +27,12 @@ module.exports = {
         "comma-dangle": ["warn", "never"],
         "eol-last": ["warn", "always"],
     },
-    "ignorePatterns": ["node_modules/**/*", "src/**/*", "mona/**/*", "loaders/**/*"],
+    "ignorePatterns": [
+        "node_modules/**/*",
+        "src/**/*",
+        "mona_wasm/**/*",
+        "loaders/**/*",
+        "sub/**/*",
+        // "**/*"
+    ],
 };

@@ -29,6 +29,7 @@
             ></damage-analysis>
         </el-dialog>
 
+<!--    select buff    -->
         <el-dialog
             :visible.sync="showSelectBuffDialog"
             title="选择BUFF"
@@ -215,6 +216,7 @@
             ></artifact-per-stat-bonus>
         </el-dialog>
 
+<!--        new artifact kumi-->
         <el-dialog
             :visible.sync="showSaveKumiDialog"
             title="新建圣遗物组"
@@ -226,6 +228,7 @@
             ></save-as-kumi>
         </el-dialog>
 
+<!--    select artifact kumi    -->
         <el-dialog
             :visible.sync="showUseKumiDialog"
             title="选择圣遗物组"
@@ -441,22 +444,41 @@
 
                 <div class="config-target-function">
                     <p class="common-title">目标函数</p>
-                    <select-target-function
-                        v-model="targetFunctionName"
-                        :character-name="characterName"
-                    ></select-target-function>
 
-                    <div class="target-function-detail">
-                        <div class="detail-left">
-                            <img :src="targetFunctionBadge" />
-                        </div>
-                        <div class="detail-right">
-                            <p
-                                class="target-function-description"
-                                v-html="targetFunctionDescription"
-                            ></p>
-                        </div>
-                    </div>
+                    <el-tabs v-model="miscTargetFunctionTab">
+                        <el-tab-pane label="普通" name="normal">
+                            <select-target-function
+                                v-model="targetFunctionName"
+                                :character-name="characterName"
+                            ></select-target-function>
+                            <div class="target-function-config" v-if="targetFunctionNeedConfig"
+                                 style="margin-top: 12px"
+                            >
+                                <item-config
+                                    v-model="targetFunctionConfig"
+                                    :item-name="targetFunctionName"
+                                    :configs="targetFunctionConfigConfig"
+                                ></item-config>
+                            </div>
+
+                            <div class="target-function-detail">
+                                <div class="detail-left">
+                                    <img :src="targetFunctionBadge" />
+                                </div>
+                                <div class="detail-right">
+                                    <p
+                                        class="target-function-description"
+                                        v-html="targetFunctionDescription"
+                                    ></p>
+                                </div>
+                            </div>
+                        </el-tab-pane>
+                        <el-tab-pane label="MONA-DSL" name="dsl">
+                            <el-alert type="warning" title="该功能为测试版" :closable="false" style="margin-bottom: 8px"></el-alert>
+                            <el-input type="textarea" :rows="10" placeholder="代码" v-model="targetFunctionDSLSource" class="code-input"></el-input>
+                        </el-tab-pane>
+                    </el-tabs>
+
 
                     <div class="target-function-config" v-if="targetFunctionNeedConfig"
                         style="margin-top: 12px"
@@ -821,6 +843,8 @@ export default {
 
             targetFunctionName: "AmberDefault",
             targetFunctionConfig: "NoConfig",
+            targetFunctionUseDSL: false,
+            targetFunctionDSLSource: "",
             optimizationResults: [],
             optimizationResultIndex: 0,
             cancelOptimizeArtifact: null,
@@ -851,6 +875,7 @@ export default {
             characterTransformativeDamage: null,
 
             savedPresetHash: null,
+            miscTargetFunctionTab: "normal"
         }
     },
     computed: {
@@ -992,9 +1017,12 @@ export default {
         },
 
         targetFunctionInterface() {
+            const use_dsl = this.miscTargetFunctionTab === "dsl"
             return {
                 name: this.targetFunctionName,
-                params: this.targetFunctionConfig
+                params: this.targetFunctionConfig,
+                use_dsl,
+                dsl_source: use_dsl ? this.targetFunctionDSLSource : ""
             }
         },
 
