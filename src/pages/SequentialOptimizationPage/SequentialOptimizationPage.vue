@@ -19,7 +19,10 @@
 
         <el-row style="margin-bottom: 12px">
             <el-col :span="12">
+                <el-button size="mini" icon="el-icon-folder-opened" @click="handleClickImportSequence">导入序列</el-button>
+                <el-button size="mini" icon="el-icon-folder-checked" @click="handleClickSaveSequence">保存序列</el-button>
                 <el-button size="mini" icon="el-icon-plus" @click="handleClickAddMember">添加成员</el-button>
+                <el-divider direction="vertical"></el-divider>
                 <el-button type="primary" size="mini" icon="el-icon-cpu" @click="handleClickStart">开始计算</el-button>
                 <el-button
                     v-show="cancelOptimizeArtifact"
@@ -202,7 +205,7 @@ export default {
         },
 
         handleClearResult() {
-            this.results = this.results.map(x => [-1, -1, -1, -1, -1])
+            this.results = this.presetNames.map(x => [-1, -1, -1, -1, -1])
         },
 
         artifactObjectToArray(art) {
@@ -254,6 +257,9 @@ export default {
         },
 
         handleClickDisplayAttributePanel: async function (index) {
+            this.$message.error("自个儿到计算器看去")
+            return
+
             const input = this.wasmGetAttributeInterface(index)
             // console.log(input)
             const result = await wasmGetAttribute(input)
@@ -314,7 +320,17 @@ export default {
                 newKumiWithArtifacts(dirId, this.getKumiName(cName, ids), ids)
             }
             this.$message.info(`已保存到"${dirName}"收藏夹`)
-        }
+        },
+
+        handleClickSaveSequence() {
+            this.$store.commit('sequence/save', this.presetNames)
+            this.$message.info('保存序列成功')
+        },
+
+        handleClickImportSequence() {
+            this.presetNames = this.$store.state.sequence.sequence.slice();
+            this.handleClearResult()
+        },
     },
     computed: {
         ...mapGetters("artifacts", {
@@ -390,9 +406,9 @@ export default {
     watch: {
         "$store.state.accounts.currentAccountId"() {
             this.results = []
-            this.resultIndex = 0
-            this.presetNames = [null]
-            this.weights = []
+            this.presetNames = []
+            this.handleClickAddMember()
+            // this.weights = []
         },
     },
 }

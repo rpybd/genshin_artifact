@@ -8,6 +8,7 @@ import accounts from "./modules/accounts";
 import artifacts from "./modules/artifact";
 import presets from "./modules/presets";
 import kumi from "./modules/artifactKumi";
+import sequence from "./modules/sequence";
 
 /**
  * localStorage scheme (version 1):
@@ -62,6 +63,7 @@ const _store = new Vuex.Store({
         artifacts,
         presets,
         kumi,
+        sequence,
     },
     getters: {
         syncFile(state) {
@@ -82,6 +84,8 @@ const _store = new Vuex.Store({
             commit('presets/set', await backend.getItem(presetKey));
             const kumiKey = `mona_account_kumi_${id}`;
             commit('kumi/set', await backend.getItem(kumiKey));
+            const seqKey = `mona_account_sequence_${id}`;
+            commit('sequence/set', await backend.getItem(seqKey));
         },
         async changeAccount({ dispatch, commit }, { id }) {
             await setTimeoutPromise(200);
@@ -100,6 +104,8 @@ const _store = new Vuex.Store({
             await backend.removeItem(presetKey);
             const kumiKey = `mona_account_kumi_${id}`;
             await backend.removeItem(kumiKey);
+            const seqKey = `mona_account_sequence_${id}`;
+            await backend.removeItem(seqKey);
         },
         async reload({ dispatch, commit }) {
             const payload = await backend.getItem('mona_accounts');
