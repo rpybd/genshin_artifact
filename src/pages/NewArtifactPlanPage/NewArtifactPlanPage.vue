@@ -478,17 +478,6 @@
                             <el-input type="textarea" :rows="10" placeholder="代码" v-model="targetFunctionDSLSource" class="code-input"></el-input>
                         </el-tab-pane>
                     </el-tabs>
-
-
-                    <div class="target-function-config" v-if="targetFunctionNeedConfig"
-                        style="margin-top: 12px"
-                    >
-                        <item-config
-                            v-model="targetFunctionConfig"
-                            :item-name="targetFunctionName"
-                            :configs="targetFunctionConfigConfig"
-                        ></item-config>
-                    </div>
                 </div>
 
                 <el-divider></el-divider>
