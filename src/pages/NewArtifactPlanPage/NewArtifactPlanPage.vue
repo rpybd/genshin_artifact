@@ -741,7 +741,7 @@ let groupId = 0
 function getGroupDefault() {
     return {
         name: String(groupId++),
-        ids: [-1, -1, -1, -1, -1],
+        ids: [-1, -2, -3, -4, -5],
         singleConfig: null,
     }
 }
