@@ -1,31 +1,34 @@
 <template>
     <div>
-        <el-drawer
-            title="面板"
-            :visible.sync="showAttributeDrawer"
-            :size="deviceIsPC ? '30%' : '100%'"
-        >
-            <template v-if="!wasmAttribute">
-                <el-empty>In theory, in should not see this</el-empty>
-            </template>
-            <template v-else>
-                <div style="padding: 0 20px">
-                    <attribute-panel
-                        :attribute="wasmAttribute"
-                    ></attribute-panel>
-                </div>
-            </template>
-        </el-drawer>
+        <apply-preset-dialog
+            ref="applyPresetDialog"
+            @selected="name => addPreset(name)"
+        ></apply-preset-dialog>
 
         <el-row style="margin-bottom: 12px">
             <el-col :span="12">
-                <el-button size="mini" icon="el-icon-folder-opened" @click="handleClickImportSequence">导入序列</el-button>
-                <el-button size="mini" icon="el-icon-folder-checked" @click="handleClickSaveSequence">保存序列</el-button>
-                <el-button size="mini" icon="el-icon-plus" @click="handleClickAddMember">添加成员</el-button>
-                <el-divider direction="vertical"></el-divider>
-                <el-button type="primary" size="mini" icon="el-icon-cpu" @click="handleClickStart">开始计算</el-button>
                 <el-button
-                    v-show="cancelOptimizeArtifact"
+                    size="mini"
+                    icon="el-icon-folder-opened"
+                    @click="handleClickImportSequence"
+                >导入序列</el-button>
+                <el-button
+                    type="primary"
+                    size="mini"
+                    icon="el-icon-folder-checked"
+                    :disabled="!sequenceDirty"
+                    @click="handleClickSaveSequence"
+                >保存序列</el-button>
+                <el-divider direction="vertical"></el-divider>
+                <el-button
+                    v-if="!cancelOptimizeArtifact"
+                    type="primary"
+                    size="mini"
+                    icon="el-icon-cpu"
+                    @click="handleClickStart"
+                >开始计算</el-button>
+                <el-button
+                    v-if="cancelOptimizeArtifact"
                     type="danger"
                     size="mini"
                     icon="el-icon-warning-outline"
@@ -43,103 +46,133 @@
             </el-col>
         </el-row>
 
-        <el-row
-            v-for="(presetName, index) in presetNames"
-            :key="index"
-            :gutter="16"
-        >
-            <el-col
-                :md="6"
-                :sm="24"
-                class="mona-scroll-hidden left member-item"
+        <transition-group name="flip-list" tag="div">
+            <el-row
+                v-for="(preset, index) in presets"
+                :key="preset.name"
+                :gutter="16"
+                class="flip-list-item"
             >
-                <div style="display: flex; justify-content: space-between; align-items: center" class="member-header">
-                    <p class="team-title">成员{{ index + 1 }}</p>
-                    <div>
-                        <el-button
-                            circle
-                            size="mini"
-                            type="text"
-                            icon="el-icon-delete"
-                            @click="handleDeleteMember(index)"
-                            style="color: white"
-                        ></el-button>
+                <el-col
+                    :md="6"
+                    :sm="24"
+                    class="mona-scroll-hidden left member-item"
+                >
+                    <div style="display: flex; justify-content: space-between; align-items: center" class="member-header">
+                        <p class="team-title">成员{{ index + 1 }}</p>
+                        <div>
+                            <el-button
+                                circle
+                                size="mini"
+                                type="text"
+                                icon="el-icon-arrow-up"
+                                :disabled="index === 0"
+                                @click="handleUpMember(index)"
+                                style="color: white"
+                            ></el-button>
+                            <el-button
+                                circle
+                                size="mini"
+                                type="text"
+                                icon="el-icon-arrow-down"
+                                :disabled="index === presetNames.length - 1"
+                                @click="handleDownMember(index)"
+                                style="color: white"
+                            ></el-button>
+                            <el-button
+                                circle
+                                size="mini"
+                                type="text"
+                                icon="el-icon-delete"
+                                :disabled="presetNames.length === 1"
+                                @click="handleDeleteMember(index)"
+                                style="color: white"
+                            ></el-button>
+                        </div>
                     </div>
-                </div>
 
-                <p class="common-title2">计算预设</p>
-                <select-preset
-                    v-model="presetNames[index]"
-                ></select-preset>
-            </el-col>
+                    <div style="display: flex; justify-content: space-between; align-items: center">
+                        <preset-item
+                            :toolbar="false"
+                            :item="preset.item"
+                            :name="preset.name"
+                            style="width: 100%;"
+                        ></preset-item>
+                    </div>
+                    <!-- <p class="common-title2">计算预设</p>
+                    <select-preset
+                        v-model="presetNames[index]"
+                    ></select-preset> -->
+                </el-col>
 
-            <el-col
-                :md="18"
-                :sm="24"
-                ref="resultCol"
-                class="mona-scroll-hidden right result-item"
+                <el-col
+                    :md="18"
+                    :sm="24"
+                    ref="resultCol"
+                    class="mona-scroll-hidden right result-item"
+                >
+                    <div class="result-item-top">
+                        <div>
+                            <!-- <span class="result-item-title">{{ characterChs[index] }}</span> -->
+                            <el-button
+                                icon="el-icon-cpu"
+                                circle
+                                size="mini"
+                                type="text"
+                                title="转到计算器"
+                                @click="handleRedirectToCalculator(index)"
+                            ></el-button>
+                        </div>
+
+                        <div class="result-item-buttons">
+                        </div>
+                    </div>
+                    <div class="result-item-content">
+                        <div
+                            v-for="(artId, artIndex) in results[index]"
+                            :key="artIndex"
+                            class="artifact-item-or-button"
+                        >
+                            <artifact-display
+                                v-if="artifactsById[artId]"
+                                :item="artifactsById[artId]"
+                                selectable
+                                :buttons="true"
+                                :delete-button="true"
+                                class="artifact-display"
+                            ></artifact-display>
+                            <add-button
+                                v-else
+                                msg=""
+                                class="add-button"
+                                style="height: 7vw; width: 11vw"
+                            ></add-button>
+                        </div>
+                    </div>
+                </el-col>
+            </el-row>
+            <el-row
+                :key="'this-is-a-unique-key-for-add-button!!!!'"
+                :gutter="16"
+                class="flip-list-item"
             >
-                <div class="result-item-top">
-                    <div>
-                        <!-- <span class="result-item-title">{{ characterChs[index] }}</span> -->
-                        <el-button
-                            icon="el-icon-s-data"
-                            circle
-                            size="mini"
-                            type="text"
-                            title="查看面板"
-                            @click="handleClickDisplayAttributePanel(index)"
-                        ></el-button>
-                    </div>
-
-                    <div class="result-item-buttons">
-                    </div>
-                </div>
-                <div class="result-item-content">
-                    <!-- <artifact-display
-                        v-for="artifactId in currentResultEntry[index]"
-                        :key="artifactId"
-                        :item="artifactsById[artifactId]"
-                        :buttons="true"
-                        :lock-button="true"
-                        :delete-button="false"
-                        :edit-button="false"
-                        @toggle="handleToggleArtifact(artifactId)"
-                    ></artifact-display> -->
-                    <div
-                        v-for="(artId, artIndex) in results[index]"
-                        :key="artId"
-                        class="artifact-item-or-button"
-                    >
-                        <artifact-display
-                            v-if="artifactsById[artId]"
-                            :item="artifactsById[artId]"
-                            selectable
-                            :buttons="true"
-                            :delete-button="true"
-                            @delete="handleRemoveArtifact(artIndex)"
-                            @toggle="handleToggleArtifact(id)"
-                            @click="handleGotoSelectArtifact(artIndex)"
-                            class="artifact-display"
-                        ></artifact-display>
-                        <add-button
-                            v-else
-                            @click="handleGotoSelectArtifact(index)"
-                            class="add-button"
-                            style="height: 7vw; width: 11vw"
-                        ></add-button>
-                    </div>
-                </div>
-            </el-col>
-        </el-row>
+                <el-col
+                    :md="6"
+                    :sm="24"
+                    class="mona-scroll-hidden left member-item"
+                >
+                    <add-button msg="添加成员" @click="$refs.applyPresetDialog.open()" style="height: 7vw; width: 100%"></add-button>
+                </el-col>
+            </el-row>
+        </transition-group>
     </div>
 </template>
 
 <script>
 import {mapGetters} from "vuex"
+import objectHash from "object-hash"
 
 import {convertArtifact} from "@util/converter"
-import {team_optimize, wasmGetAttribute} from "@/wasm"
 import {wasmSingleOptimize} from "@/wasm/single_optimize"
 import {convertPresetToWasmInterface, getPresetEntryByName} from "@util/preset"
 import {toggleArtifact} from "@util/artifacts"
@@ -157,6 +190,7 @@ import PresetItem from "@c/display/PresetItem"
 import SelectPreset from "@c/select/SelectPreset"
 import AttributePanel from "@c/display/AttributePanel"
 import AddButton from "@c/misc/AddButton"
+import ApplyPresetDialog from "../NewArtifactPlanPage/ApplyPresetDialog"
 
 export default {
     name: "SequentialOptimizationPage",
@@ -170,6 +204,7 @@ export default {
         SelectPreset,
         AttributePanel,
         AddButton,
+        ApplyPresetDialog,
     },
     data() {
         return {
@@ -183,22 +218,32 @@ export default {
             wasmAttribute: null,
 
             deviceIsPC,
+            savedSequenceHash: null,
         }
     },
-    mounted() {
-        this.handleClickAddMember()
-    },
     methods: {
-        handleClickAddMember() {
-            this.presetNames.push(null)
-            // this.weights.push(0)
+        addPreset(name) {
+            this.presetNames.push(name)
             this.results.push([-1, -1, -1, -1, -1])
         },
 
+        swap(arr, i, j) {
+            let temp = arr[i]
+            this.$set(arr, i, arr[j])
+            this.$set(arr, j, temp)
+        },
+
+        handleUpMember(index) {
+            this.swap(this.presetNames, index, index - 1)
+            this.swap(this.results, index, index - 1)
+        },
+
+        handleDownMember(index) {
+            this.swap(this.presetNames, index, index + 1)
+            this.swap(this.results, index, index + 1)
+        },
+
         handleDeleteMember(index) {
-            if (this.presetNames.length === 1) {
-                return
-            }
             this.$delete(this.presetNames, index)
             // this.$delete(this.weights, index)
             this.$delete(this.results, index)
@@ -219,9 +264,9 @@ export default {
         },
 
         async handleClickStart() {
-            const canStart = this.presets.length === this.presetNames.length
+            const canStart = this.presets.every(x => x)
             if (!canStart) {
-                this.$message.error("请选择计算预设")
+                this.$message.error("有计算预设已被删除")
                 return
             }
 
@@ -252,21 +297,8 @@ export default {
                 if (results.length === 0) {
                     this.$message.error("没有符合条件的圣遗物")
                 }
-                Vue.set(this.results, i, this.artifactObjectToArray(results[0]))
+                this.$set(this.results, i, this.artifactObjectToArray(results[0]))
             }
-        },
-
-        handleClickDisplayAttributePanel: async function (index) {
-            this.$message.error("自个儿到计算器看去")
-            return
-
-            const input = this.wasmGetAttributeInterface(index)
-            // console.log(input)
-            const result = await wasmGetAttribute(input)
-            this.wasmAttribute = result
-
-            this.showAttributeDrawer = true
-            // console.log(result)
         },
 
         wasmGetAttributeInterface(index) {
@@ -324,12 +356,24 @@ export default {
 
         handleClickSaveSequence() {
             this.$store.commit('sequence/save', this.presetNames)
+            this.savedSequenceHash = objectHash(this.presetNames)
             this.$message.info('保存序列成功')
         },
 
         handleClickImportSequence() {
-            this.presetNames = this.$store.state.sequence.sequence.slice();
+            this.presetNames = this.$store.state.sequence.sequence.slice()
+            this.savedSequenceHash = objectHash(this.presetNames)
             this.handleClearResult()
+        },
+
+        handleRedirectToCalculator(index) {
+            this.$router.push({
+                name: "calculate",
+                params: {
+                    presetName: this.presetNames[index],
+                    artifacts: this.results[index],
+                }
+            })
         },
     },
     computed: {
@@ -363,44 +407,12 @@ export default {
         },
 
         presets() {
-            let results = []
-            for (let name of this.presetNames) {
-                if (name) {
-                    results.push(getPresetEntryByName(name))
-                }
-            }
-            return results
+            return this.presetNames.map(name => getPresetEntryByName(name))
         },
 
-        optimizeTeamHyperParamInterface() {
-            // todo
-            return {
-                mva_step: 5,
-                work_space: 1000,
-                max_re_optimize: 5,
-                max_search: 1000000,
-                count: 1000,
-            }
-        },
-
-        optimizeTeamWasmInterface() {
-            // sort by weight
-            // let temp = []
-            // for (let i = 0; i < this.singleInterfaces.length; i++) {
-            //     temp.push([this.singleInterfaces[i], this.weights[i]])
-            // }
-            // temp.sort((a, b) => b[1] - a[1])
-            //
-            // const interfaces = temp.map(x => x[0])
-            // const weights = temp.map(x => x[1])
-
-            return {
-                // single_interfaces: interfaces,
-                // weights: weights,
-                single_interfaces: this.singleInterfaces,
-                weights: this.weights,
-                hyper_param: this.optimizeTeamHyperParamInterface
-            }
+        sequenceDirty() {
+            const hash = objectHash(this.presetNames)
+            return hash !== this.savedSequenceHash
         }
     },
     watch: {
@@ -511,5 +523,18 @@ export default {
             }
         }
     }
+}
+
+.flip-list-item {
+  transition: all .6s;
+}
+
+.flip-list-enter, .flip-list-leave-to {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.flip-list-leave-active {
+    position: absolute;
 }
 </style>

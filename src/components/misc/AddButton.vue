@@ -5,7 +5,7 @@
         <span class="s2"></span>
         <span class="s3"></span>
         <span class="s4"></span>
-        +
+        {{ msg }}
     </div>
 </template>
 
@@ -13,7 +13,8 @@
 export default {
     name: "AddButton",
     props: {
-        back: { default: "" }
+        back: { default: "" },
+        msg: { default: "+" },
     }
 }
 </script>
@@ -34,7 +35,7 @@ $backSize: 58px;
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    font-size: 20px;
+    font-size: 25px;
     color: $color;
     cursor: pointer;
     border-radius: $border-radius;

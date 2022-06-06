@@ -20,9 +20,11 @@
 <!--    <link rel="stylesheet" href="https://unpkg.zhimg.com/element-ui@2.15.6/lib/theme-chalk/display.css">-->
 <!--    <% } %>-->
 
+    <% if (htmlWebpackPlugin.options.cdn) { %>
     <% for (var css of htmlWebpackPlugin.options.cdn.css) { %>
     <% if (css !== "") { %>
     <link rel="stylesheet" href="<%= css.url %>" type="text/css"></link>
+    <% } %>
     <% } %>
     <% } %>
 
@@ -174,9 +176,11 @@
     }
 </style>
 
+<% if (htmlWebpackPlugin.options.cdn) { %>
 <% for (var js of htmlWebpackPlugin.options.cdn.js) { %>
-<% if (css !== "") { %>
+<% if (js !== "") { %>
 <script src="<%= js.url %>"></script>
+<% } %>
 <% } %>
 <% } %>
 

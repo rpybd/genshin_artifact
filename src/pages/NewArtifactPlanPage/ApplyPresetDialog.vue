@@ -52,11 +52,7 @@ export default {
 }
 </script>
 
-<style scoped>
-.item {
-    margin: 0 16px 16px 0;
-}
-
+<style scoped lang="scss">
 .active {
     background: #12345611;
 }
@@ -67,7 +63,13 @@ export default {
 }
 
 .body {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    grid-auto-rows: min-content;
+
+    .item {
+        width: 100%;
+    }
 }
 </style>

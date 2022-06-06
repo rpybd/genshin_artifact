@@ -1392,6 +1392,10 @@ export default {
             this.showConstraintDialog = true
         },
 
+        useArtifacts(artifacts) {
+            this.artifactIds = artifacts
+        },
+
         async usePreset(name) {
             const entry = getPresetEntryByName(name)
             const item = deepCopy(entry.item)

@@ -46,9 +46,13 @@ export default {
             // console.log("enter", vm.$route.params)
             const component = vm.$refs["page"]
             const presetName = vm.$route.params["presetName"]
+            const artifacts = vm.$route.params["artifacts"]
 
             if (component && presetName) {
                 component.usePreset(presetName)
+            }
+            if (component && artifacts) {
+                component.useArtifacts(artifacts)
             }
         })
     }
