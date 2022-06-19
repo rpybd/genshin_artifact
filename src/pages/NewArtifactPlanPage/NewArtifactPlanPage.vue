@@ -1490,12 +1490,23 @@ export default {
         async handleSavePreset(name) {
             const item = deepCopy(this.presetItem)
             if (!name) {
-                name = (await this.$prompt("输入名称（重复名称将覆盖）", "存为预设", {
+                name = (await this.$prompt("输入名称", "存为预设", {
                     confirmButtonText: "确定",
                     cancelButtonText: "取消",
                     inputPattern: /[^\s]+$/,
                     inputValue: this.presetDefaultName
                 })).value
+                if (getPresetEntryByName(name)) {
+                    try {
+                        await this.$confirm("已存在该名称的预设，确定覆盖？", "警告", {
+                            confirmButtonText: "确定",
+                            cancelButtonText: "取消",
+                            type: 'warning'
+                        })
+                    } catch (e) {
+                        return
+                    }
+                }
                 this.miscCurrentPresetName = item.name = name
             }
             createOrUpdatePreset(item, name)
