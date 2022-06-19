@@ -5,6 +5,17 @@
             @selected="name => addPreset(name)"
         ></apply-preset-dialog>
 
+        <el-dialog
+            title="选择圣遗物"
+            :width="deviceIsPC ? '80%' : '90%'"
+            :visible.sync="showSelectArtifactDialog"
+        >
+            <select-artifact
+                :position="selectArtifactSlot"
+                @select="handleSelectArtifact"
+            ></select-artifact>
+        </el-dialog>
+
         <el-row style="margin-bottom: 12px">
             <el-col :span="12">
                 <el-button
@@ -25,7 +36,7 @@
                     type="primary"
                     size="mini"
                     icon="el-icon-cpu"
-                    @click="handleClickStart"
+                    @click="handleStartCompute(0)"
                 >开始计算</el-button>
                 <el-button
                     v-if="cancelOptimizeArtifact"
@@ -84,7 +95,6 @@
                                 size="mini"
                                 type="text"
                                 icon="el-icon-delete"
-                                :disabled="presetNames.length === 1"
                                 @click="handleDeleteMember(index)"
                                 style="color: white"
                             ></el-button>
@@ -114,16 +124,30 @@
                     <div class="result-item-top">
                         <div>
                             <!-- <span class="result-item-title">{{ characterChs[index] }}</span> -->
-                            <el-button
+                            <!-- <el-button
                                 icon="el-icon-cpu"
                                 circle
                                 size="mini"
                                 type="text"
                                 title="转到计算器"
                                 @click="handleRedirectToCalculator(index)"
-                            ></el-button>
+                            ></el-button> -->
+                            <el-button
+                                size="mini"
+                                icon="el-icon-view"
+                                @click="handleRedirectToCalculator(index)"
+                            >角色详情</el-button>
+                            <el-button
+                                size="mini"
+                                icon="el-icon-smoking"
+                                @click="handleStartCompute(index, index + 1)"
+                            >计算这个</el-button>
+                            <el-button
+                                size="mini"
+                                icon="el-icon-caret-bottom"
+                                @click="handleStartCompute(index)"
+                            >计算这个及以下</el-button>
                         </div>
-
                         <div class="result-item-buttons">
                         </div>
                     </div>
@@ -139,11 +163,14 @@
                                 selectable
                                 :buttons="true"
                                 :delete-button="true"
+                                @delete="handleRemoveArtifact(index, artIndex)"
+                                @toggle="handleToggleArtifact(artId)"
+                                @click="handleGotoSelectArtifact(index, artIndex)"
                                 class="artifact-display"
                             ></artifact-display>
                             <add-button
                                 v-else
-                                msg=""
+                                @click="handleGotoSelectArtifact(index, artIndex)"
                                 class="add-button"
                                 style="height: 7vw; width: 11vw"
                             ></add-button>
@@ -191,6 +218,7 @@ import SelectPreset from "@c/select/SelectPreset"
 import AttributePanel from "@c/display/AttributePanel"
 import AddButton from "@c/misc/AddButton"
 import ApplyPresetDialog from "../NewArtifactPlanPage/ApplyPresetDialog"
+import SelectArtifact from "@c/select/SelectArtifact"
 
 export default {
     name: "SequentialOptimizationPage",
@@ -205,12 +233,16 @@ export default {
         AttributePanel,
         AddButton,
         ApplyPresetDialog,
+        SelectArtifact,
     },
     data() {
         return {
             presetNames: [],
-            // weights: [],
             results: [],    // a 2d array
+
+            showSelectArtifactDialog: false,
+            selectArtifactSlot: "any",
+            handleSelectArtifact: null,
 
             cancelOptimizeArtifact: null,
 
@@ -220,6 +252,31 @@ export default {
             deviceIsPC,
             savedSequenceHash: null,
         }
+    },
+    computed: {
+        ...mapGetters("artifacts", {
+            artifactsFlat: "allFlat",
+            artifactsById: "artifactsById",
+        }),
+
+        singleInterfaces() {
+            return this.presets.map(x => convertPresetToWasmInterface(x.item))
+        },
+
+        presets() {
+            return this.presetNames.map(name => getPresetEntryByName(name))
+        },
+
+        sequenceDirty() {
+            const hash = objectHash(this.presetNames)
+            return hash !== this.savedSequenceHash
+        }
+    },
+    watch: {
+        "$store.state.accounts.currentAccountId"() {
+            this.presetNames = []
+            this.results = []
+        },
     },
     methods: {
         addPreset(name) {
@@ -245,12 +302,7 @@ export default {
 
         handleDeleteMember(index) {
             this.$delete(this.presetNames, index)
-            // this.$delete(this.weights, index)
             this.$delete(this.results, index)
-        },
-
-        handleClearResult() {
-            this.results = this.presetNames.map(x => [-1, -1, -1, -1, -1])
         },
 
         artifactObjectToArray(art) {
@@ -263,15 +315,36 @@ export default {
             ]
         },
 
-        async handleClickStart() {
-            const canStart = this.presets.every(x => x)
+        getFilteredArtifactsWasm(excludeResults) {
+            let results = []
+            for (let artifact of this.artifactsFlat) {
+                if (artifact.level >= 16) {
+                    results.push(artifact)
+                }
+            }
+            let used = new Set()
+            for (let artIds of excludeResults) {
+                for (let artId of artIds) {
+                    used.add(artId)
+                }
+            }
+            return results.filter(a => !a.omit && !used.has(a.id)).map(convertArtifact)
+        },
+
+        async handleStartCompute(start, end) {
+            if (end === undefined) {
+                end = this.presets.length
+            }
+            const canStart = this.presets.slice(start, end).every(x => x)
             if (!canStart) {
-                this.$message.error("有计算预设已被删除")
+                this.$message.error("计算范围内有计算预设已被删除")
                 return
             }
 
-            this.handleClearResult()
-            for (let i = 0; i < this.presetNames.length; i++) {
+            for (let i = start; i < end; i++) {
+                this.$set(this.results, i, [-1, -1, -1, -1, -1])
+            }
+            for (let i = start; i < end; i++) {
                 const singleInterface = {
                     ...convertPresetToWasmInterface(this.presets[i].item),
                     max_result_num: 1,
@@ -282,7 +355,8 @@ export default {
                     text: "莫娜占卜中",
                     // background: 'rgba(0, 0, 0, 0.7)',
                 })
-                let [promise, cancel] = wasmSingleOptimize(singleInterface, this.filteredArtifactsWasm)
+                let availableArts = this.getFilteredArtifactsWasm(this.results.slice(0, i))
+                let [promise, cancel] = wasmSingleOptimize(singleInterface, availableArts)
                 this.cancelOptimizeArtifact = cancel
                 let results
                 try {
@@ -363,7 +437,7 @@ export default {
         handleClickImportSequence() {
             this.presetNames = this.$store.state.sequence.sequence.slice()
             this.savedSequenceHash = objectHash(this.presetNames)
-            this.handleClearResult()
+            this.results = this.presetNames.map(x => [-1, -1, -1, -1, -1])
         },
 
         handleRedirectToCalculator(index) {
@@ -375,52 +449,24 @@ export default {
                 }
             })
         },
-    },
-    computed: {
-        ...mapGetters("artifacts", {
-            artifactsFlat: "allFlat",
-            artifactsById: "artifactsById",
-        }),
 
-        singleInterfaces() {
-            return this.presets.map(x => convertPresetToWasmInterface(x.item))
+        handleRemoveArtifact(index, artIndex) {
+            this.$set(this.results[index], artIndex, -1)
         },
 
-        filteredArtifacts() {
-            let results = []
-            for (let artifact of this.artifactsFlat) {
-                if (artifact.level >= 16) {
-                    results.push(artifact)
-                }
+        handleToggleArtifact(id) {
+            this.$store.commit("artifacts/toggleById", { id })
+        },
+
+        handleGotoSelectArtifact(index, artIndex) {
+            const map = ["flower", "feather", "sand", "cup", "head"]
+            const slotName = map[artIndex]
+            this.selectArtifactSlot = slotName
+            this.handleSelectArtifact = id => {
+                this.$set(this.results[index], artIndex, id)
+                this.showSelectArtifactDialog = false
             }
-            let used = new Set()
-            for (let artIds of this.results) {
-                for (let artId of artIds) {
-                    used.add(artId)
-                }
-            }
-            return results.filter(a => !a.omit && !used.has(a.id))
-        },
-
-        filteredArtifactsWasm() {
-            return this.filteredArtifacts.map(convertArtifact)
-        },
-
-        presets() {
-            return this.presetNames.map(name => getPresetEntryByName(name))
-        },
-
-        sequenceDirty() {
-            const hash = objectHash(this.presetNames)
-            return hash !== this.savedSequenceHash
-        }
-    },
-    watch: {
-        "$store.state.accounts.currentAccountId"() {
-            this.results = []
-            this.presetNames = []
-            this.handleClickAddMember()
-            // this.weights = []
+            this.showSelectArtifactDialog = true
         },
     },
 }
