@@ -8,8 +8,10 @@ import SimpleError from "@c/loading/SimpleError"
 
 import { requestMonaWasm } from "@/vendors/mona"
 
+let component1
+
 const NewArtifactPlanPage = () => {
-    const component1 = requestMonaWasm().then(() => import(
+    component1 = requestMonaWasm().then(() => import(
         /* webpackChunkName: "artifact-plan-page" */
         /* webpackPrefetch: true */
         "./NewArtifactPlanPage"
@@ -44,16 +46,23 @@ export default {
     beforeRouteEnter(to, from, next) {
         next(vm => {
             // console.log("enter", vm.$route.params)
-            const component = vm.$refs["page"]
-            const presetName = vm.$route.params["presetName"]
-            const artifacts = vm.$route.params["artifacts"]
 
-            if (component && presetName) {
-                component.usePreset(presetName)
-            }
-            if (component && artifacts) {
-                component.useArtifacts(artifacts)
-            }
+            component1
+                .then(() => vm.$nextTick())
+                // .then(() => component.$nextTick())
+                // .then(() => new Promise(r => setTimeout(r, 500)))
+                .then(() => {
+                    const component = vm.$refs["page"]
+                    const presetName = vm.$route.params["presetName"]
+                    const artifacts = vm.$route.params["artifacts"]
+                    // console.log(component)
+                    if (presetName) {
+                        component.usePreset(presetName)
+                    }
+                    if (artifacts) {
+                        component.useArtifacts(artifacts)
+                    }
+                })
         })
     }
 }

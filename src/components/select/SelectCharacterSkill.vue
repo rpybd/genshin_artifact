@@ -7,7 +7,7 @@
         :props="{ expandTrigger: 'hover', emitPath: false }"
         @change="$emit('input', $event)"
         size="small"
-        style="width: 50%"
+        style="width: 61.8%"
     ></el-cascader>
 </template>
 
@@ -21,9 +21,9 @@ export default {
         options() {
             const data = characterData[this.characterName]
 
-            const options = [];
+            const options = []
             for (let i = 0; i < 3; i++) {
-                const j = i + 1;
+                const j = i + 1
                 const skillMap = data[`skillMap${j}`]
                 if (skillMap.length > 0) {
                     options.push({
@@ -36,7 +36,7 @@ export default {
                     })
                 }
             }
-            return options;
+            return options
         },
     },
 }
