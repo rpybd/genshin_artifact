@@ -118,7 +118,7 @@
                 <el-col
                     :md="18"
                     :sm="24"
-                    ref="resultCol"
+                    :id="presetNamesAndId[index][1]"
                     class="mona-scroll-hidden right result-item"
                 >
                     <div class="result-item-top">
@@ -237,7 +237,7 @@ export default {
     },
     data() {
         return {
-            presetNames: [],
+            presetNamesAndId: [],
             results: [],    // a 2d array
 
             showSelectArtifactDialog: false,
@@ -263,6 +263,10 @@ export default {
             return this.presets.map(x => convertPresetToWasmInterface(x.item))
         },
 
+        presetNames() {
+            return this.presetNamesAndId.map(([name, id]) => name)
+        },
+
         presets() {
             return this.presetNames.map(name => getPresetEntryByName(name))
         },
@@ -274,13 +278,17 @@ export default {
     },
     watch: {
         "$store.state.accounts.currentAccountId"() {
-            this.presetNames = []
+            this.presetNameAndId = []
             this.results = []
         },
     },
     methods: {
+        genUniqueId() {
+            return 'arts' + String(Math.floor(Math.random() * 1e8))
+        },
+
         addPreset(name) {
-            this.presetNames.push(name)
+            this.presetNamesAndId.push([name, this.genUniqueId()])
             this.results.push([-1, -1, -1, -1, -1])
         },
 
@@ -291,17 +299,17 @@ export default {
         },
 
         handleUpMember(index) {
-            this.swap(this.presetNames, index, index - 1)
+            this.swap(this.presetNamesAndId, index, index - 1)
             this.swap(this.results, index, index - 1)
         },
 
         handleDownMember(index) {
-            this.swap(this.presetNames, index, index + 1)
+            this.swap(this.presetNamesAndId, index, index + 1)
             this.swap(this.results, index, index + 1)
         },
 
         handleDeleteMember(index) {
-            this.$delete(this.presetNames, index)
+            this.$delete(this.presetNamesAndId, index)
             this.$delete(this.results, index)
         },
 
@@ -350,7 +358,7 @@ export default {
                     max_result_num: 1,
                 }
                 let loading = this.$loading({
-                    target: this.$refs.resultCol[i].$el,
+                    target: '#' + this.presetNamesAndId[i][1],
                     lock: true,
                     text: "莫娜占卜中",
                     // background: 'rgba(0, 0, 0, 0.7)',
@@ -435,7 +443,8 @@ export default {
         },
 
         handleClickImportSequence() {
-            this.presetNames = this.$store.state.sequence.sequence.slice()
+            let names = this.$store.state.sequence.sequence.slice()
+            this.presetNamesAndId = names.map(name => [name, this.genUniqueId()])
             this.savedSequenceHash = objectHash(this.presetNames)
             this.results = this.presetNames.map(x => [-1, -1, -1, -1, -1])
         },
