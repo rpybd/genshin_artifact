@@ -403,38 +403,13 @@ export default {
             await this.handleStartCompute(0)
         },
 
-        getKumiName(characterName, artifactIds) {
-            let ctr = {}
-            for (let id of artifactIds) {
-                let artifact = this.artifactsById[id]
-                if (!artifact) {
-                    continue
-                }
-                const setName = artifact.setName
-                if (!Object.prototype.hasOwnProperty.call(ctr, setName)) {
-                    ctr[setName] = 0
-                }
-                ctr[setName] += 1
-            }
-
-            let name = characterData[characterName].chs
-            for (const setName in ctr) {
-                if (ctr[setName] >= 2) {
-                    name += '-' + artifactsData[setName].chs
-                }
-            }
-            return name
-        },
-
         handleClickSaveToDirectory() {
             let dirName = new Date().toLocaleString()
             newDir(dirName)
             let dirId = getDirByName(dirName)
-            console.log(dirId)
             for (let i = 0; i < this.presets.length; i++) {
-                let cName = this.presets[i].item.character.name
-                let ids = this.results[i]
-                newKumiWithArtifacts(dirId, this.getKumiName(cName, ids), ids)
+                const item = this.sequenceData[i]
+                newKumiWithArtifacts(dirId, item.name, item.arts)
             }
             this.$message.info(`已保存到"${dirName}"收藏夹`)
         },
