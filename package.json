@@ -38,7 +38,8 @@
     "object-hash": "^2.2.0",
     "ua-parser-js": "^1.0.2",
     "vue": "^2.6.11",
-    "vue-echarts": "^6.0.2"
+    "vue-echarts": "^6.0.2",
+    "vuedraggable": "^2.24.3"
   },
   "devDependencies": {
     "@babel/core": "^7.16.10",
