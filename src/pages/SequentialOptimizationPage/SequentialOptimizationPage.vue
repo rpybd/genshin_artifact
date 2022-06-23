@@ -48,11 +48,40 @@
             </el-col>
             <el-col :span="12">
                 <div style="float: right">
-                    <el-button
-                        size="mini"
-                        icon="el-icon-star-on"
-                        @click="handleClickSaveToDirectory"
-                    >批量存至收藏夹</el-button>
+                    <el-button-group>
+                        <el-button
+                            type="primary"
+                            size="mini"
+                            icon="el-icon-star-on"
+                            @click="handleClickSaveToDirectory"
+                        >存至收藏夹</el-button>
+                        <el-dropdown trigger="click" @command="handleClickImportFromDirectory">
+                            <el-button 
+                                size="mini"
+                                icon="el-icon-download"
+                            >导入</el-button>
+                            <el-dropdown-menu slot="dropdown">
+                                <el-dropdown-item
+                                    v-for="item in this.directories"
+                                    :key="item.id"
+                                    :command="item.id"
+                                >{{item.title}}</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                        <el-dropdown trigger="click" @command="handleClickCompareWithDirectory">
+                            <el-button 
+                                size="mini"
+                                icon="el-icon-document-copy"
+                            >对比</el-button>
+                            <el-dropdown-menu slot="dropdown">
+                                <el-dropdown-item
+                                    v-for="item in this.directories"
+                                    :key="item.id"
+                                    :command="item.id"
+                                >{{item.title}}</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                    </el-button-group>
                 </div>
             </el-col>
         </el-row>
@@ -172,12 +201,12 @@
                                     @toggle="handleToggleArtifact(artId)"
                                     @click="handleGotoSelectArtifact(index, artIndex)"
                                     class="artifact-display"
+                                    :class="{ differ: sequenceData[index].differ[artIndex] }"
                                 ></artifact-display>
                                 <add-button
                                     v-else
                                     @click="handleGotoSelectArtifact(index, artIndex)"
                                     class="add-button"
-                                    style="height: 7vw; width: 11vw"
                                 ></add-button>
                             </div>
                         </div>
@@ -214,7 +243,7 @@ import {toggleArtifact} from "@util/artifacts"
 import {deviceIsPC} from "@util/device"
 import {characterData} from "@character"
 import {artifactsData} from "@artifact"
-import {getDirByName, newKumiWithArtifacts, newDir} from "@util/kumi"
+import {getDirByName, newKumiWithArtifacts, newDir, getKumisByDir} from "@util/kumi"
 
 import SelectCharacter from "@c/select/SelectCharacter"
 import SelectWeapon from "@c/select/SelectWeapon"
@@ -269,6 +298,10 @@ export default {
             artifactsById: "artifactsById",
         }),
 
+        ...mapGetters("kumi", {
+            directories: "directories",
+        }),
+
         presetNames() {
             return this.sequenceData.map(({name}) => name)
         },
@@ -297,6 +330,7 @@ export default {
                 name,
                 id: this.genUniqueId(),
                 arts: [-1, -1, -1, -1, -1],
+                differ: [false, false, false, false, false]
             })
         },
 
@@ -320,11 +354,11 @@ export default {
 
         artifactObjectToArray(art) {
             return [
-                art.flower,
-                art.feather,
-                art.sand,
-                art.goblet,
-                art.head,
+                art.flower || -1,
+                art.feather || -1,
+                art.sand || -1,
+                art.goblet || art.cup || -1,
+                art.head || -1,
             ]
         },
 
@@ -383,6 +417,7 @@ export default {
                 }
                 if (results.length === 0) {
                     this.$message.error("没有符合条件的圣遗物")
+                    break
                 }
                 item.arts = this.artifactObjectToArray(results[0])
             }
@@ -414,6 +449,56 @@ export default {
             this.$message.info(`已保存到"${dirName}"收藏夹`)
         },
 
+        getArtifactsFromDirectory(dirId) {
+            //preset in page includes name artID & arts, 
+            //while preset in dir use id, title & artifactIds
+            //get array of kumisID by dirID
+            let kumiArr = getKumisByDir(dirId)
+            //order arts and transform kumisID to map 
+            let orderedArtsMap = new Map()
+            for (let kumi of kumiArr) {
+                let tempOrderdArtsSeq = {}
+                for (let artId of kumi.artifactIds) {
+                    let art = this.artifactsById[artId]
+                    if (art) {
+                        tempOrderdArtsSeq[art.position] = art.id
+                    }
+                }
+                orderedArtsMap.set(kumi.title, tempOrderdArtsSeq)
+            }
+            
+            return orderedArtsMap
+        },
+
+        handleClickImportFromDirectory(dirId) {
+            let artsMap = this.getArtifactsFromDirectory(dirId)
+            //iterate sequenceData
+            for (let item of this.sequenceData) {
+                if (artsMap.has(item.name)) {
+                    let art = artsMap.get(item.name)
+                    item.arts = this.artifactObjectToArray(art)
+                }
+                item.differ = [false, false, false, false, false]
+            }
+        },
+
+        handleClickCompareWithDirectory(dirId) {
+            let artsMap = this.getArtifactsFromDirectory(dirId)
+            //iterate and compare
+            for (let item of this.sequenceData) {       
+                if (artsMap.has(item.name)) {
+                    let artIdFromMap = this.artifactObjectToArray(artsMap.get(item.name))
+                    let differ = []
+                    for (let i = 0; i < 5; i++) {
+                        differ.push(item.arts[i] !== artIdFromMap[i])
+                    }
+                    item.differ = differ
+                } else {
+                    item.differ = [false, false, false, false, false]
+                }
+            }
+        },
+
         handleClickSaveSequence() {
             this.$store.commit('sequence/save', this.presetNames)
             this.savedSequenceHash = objectHash(this.presetNames)
@@ -426,6 +511,7 @@ export default {
                 name,
                 id: this.genUniqueId(),
                 arts: [-1, -1, -1, -1, -1],
+                differ: [false, false, false, false, false]
             }))
             this.savedSequenceHash = objectHash(this.presetNames)
         },
@@ -549,14 +635,76 @@ export default {
         gap: 4px;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 
+        // .artifact-item-or-button {
+        //     .add-button {
+        //         width: 100%;
+        //         height: 100%;
+        //     }
+        //     .artifact-display {
+        //         width: 100%;
+        //         box-sizing: border-box;
+        //         &.differ {
+        //             box-shadow: 2px 2px 3px #888888;
+        //             :first-child {
+        //                 background-color: rgb(217, 236, 255);
+        //             }
+        //         }
+        //     }
+        // }
         .artifact-item-or-button {
             .add-button {
                 width: 100%;
                 height: 100%;
+                min-height: 7vw;
             }
             .artifact-display {
+                overflow: hidden;
+                // border-radius: 5px;
                 width: 100%;
                 box-sizing: border-box;
+                z-index: 0;
+                &.differ {
+                    @keyframes hint {
+                        0% {
+                            opacity: 0;
+                            transform: none;
+                        }
+                        50% {
+                            opacity: 1;
+                            transform: none;
+                        }
+                        100% {
+                            opacity: 0;
+                            transform: none;
+                        }
+                    }
+
+                    &::before {
+                        content: '';
+                        position: absolute;
+                        z-index: -2;
+                        left: -50%;
+                        top: -50%;
+                        width: 200%;
+                        height: 200%;
+                        background-color: rgb(148, 199, 251);
+                        background-repeat: no-repeat;
+                        background-position: 0 0;
+                        animation: hint 3s linear infinite;
+                    }
+
+                    &::after {
+                        content: '';
+                        position: absolute;
+                        z-index: -1;
+                        left: 2px;
+                        top: 2px;
+                        width: calc(100% - 4px);
+                        height: calc(100% - 4px);
+                        background: rgb(255, 255, 255);
+                    }
+                }
+                
             }
         }
     }
@@ -577,7 +725,7 @@ export default {
 }
 
 .ghost {
-  opacity: 0.5;
-  background: #c8ebfb;
+    opacity: 0.5;
+    background: #c8ebfb;
 }
 </style>
