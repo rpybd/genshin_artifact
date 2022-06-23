@@ -56,29 +56,35 @@
                             @click="handleClickSaveToDirectory"
                         >存至收藏夹</el-button>
                         <el-dropdown trigger="click" @command="handleClickImportFromDirectory">
-                            <el-button 
+                            <el-button
                                 size="mini"
                                 icon="el-icon-download"
                             >导入</el-button>
                             <el-dropdown-menu slot="dropdown">
                                 <el-dropdown-item
-                                    v-for="item in this.directories"
+                                    v-for="item in directories"
                                     :key="item.id"
                                     :command="item.id"
                                 >{{item.title}}</el-dropdown-item>
                             </el-dropdown-menu>
                         </el-dropdown>
                         <el-dropdown trigger="click" @command="handleClickCompareWithDirectory">
-                            <el-button 
+                            <el-button
                                 size="mini"
                                 icon="el-icon-document-copy"
-                            >对比</el-button>
+                            >对比{{ oldDirectoryId !== null ? '中' : '' }}</el-button>
                             <el-dropdown-menu slot="dropdown">
                                 <el-dropdown-item
-                                    v-for="item in this.directories"
+                                    v-for="item in directories"
                                     :key="item.id"
                                     :command="item.id"
+                                    :class="{ 'directory-active': oldDirectoryId == item.id }"
                                 >{{item.title}}</el-dropdown-item>
+                                <el-dropdown-item
+                                    v-if="oldDirectoryId !== null"
+                                    divided
+                                    command="cancel"
+                                >取消</el-dropdown-item>
                             </el-dropdown-menu>
                         </el-dropdown>
                     </el-button-group>
@@ -157,15 +163,6 @@
                     >
                         <div class="result-item-top">
                             <div>
-                                <!-- <span class="result-item-title">{{ characterChs[index] }}</span> -->
-                                <!-- <el-button
-                                    icon="el-icon-cpu"
-                                    circle
-                                    size="mini"
-                                    type="text"
-                                    title="转到计算器"
-                                    @click="handleRedirectToCalculator(index)"
-                                ></el-button> -->
                                 <el-button
                                     size="mini"
                                     icon="el-icon-view"
@@ -201,7 +198,7 @@
                                     @toggle="handleToggleArtifact(artId)"
                                     @click="handleGotoSelectArtifact(index, artIndex)"
                                     class="artifact-display"
-                                    :class="{ differ: sequenceData[index].differ[artIndex] }"
+                                    :class="{ differ: oldDirectory.has(name) && artId !== oldDirectory.get(name)[artIndex] }"
                                 ></artifact-display>
                                 <add-button
                                     v-else
@@ -215,7 +212,6 @@
                 <el-row
                     :key="'this-is-a-unique-key-for-add-button!!!!'"
                     :gutter="16"
-                    class="flip-list-item"
                 >
                     <el-col
                         :md="6"
@@ -261,14 +257,14 @@ export default {
     name: "SequentialOptimizationPage",
     components: {
         draggable,
-        SelectCharacter,
-        SelectWeapon,
-        ItemConfig,
+        // SelectCharacter,
+        // SelectWeapon,
+        // ItemConfig,
         ArtifactDisplay,
-        MyButton1,
+        // MyButton1,
         PresetItem,
         SelectPreset,
-        AttributePanel,
+        // AttributePanel,
         AddButton,
         ApplyPresetDialog,
         SelectArtifact,
@@ -276,6 +272,8 @@ export default {
     data() {
         return {
             sequenceData: [],
+            savedSequenceHash: null,
+            dragging: false,
 
             showSelectArtifactDialog: false,
             selectArtifactSlot: "any",
@@ -283,13 +281,9 @@ export default {
 
             cancelOptimizeArtifact: null,
 
-            showAttributeDrawer: false,
-            wasmAttribute: null,
+            oldDirectoryId: null,
 
             deviceIsPC,
-            savedSequenceHash: null,
-
-            dragging: false,
         }
     },
     computed: {
@@ -314,6 +308,10 @@ export default {
             const hash = objectHash(this.presetNames)
             return hash !== this.savedSequenceHash
         },
+
+        oldDirectory() {
+            return this.getArtifactsFromDirectory(this.oldDirectoryId)
+        }
     },
     watch: {
         "$store.state.accounts.currentAccountId"() {
@@ -330,7 +328,6 @@ export default {
                 name,
                 id: this.genUniqueId(),
                 arts: [-1, -1, -1, -1, -1],
-                differ: [false, false, false, false, false]
             })
         },
 
@@ -450,11 +447,11 @@ export default {
         },
 
         getArtifactsFromDirectory(dirId) {
-            //preset in page includes name artID & arts, 
+            //preset in page includes name artID & arts,
             //while preset in dir use id, title & artifactIds
             //get array of kumisID by dirID
             let kumiArr = getKumisByDir(dirId)
-            //order arts and transform kumisID to map 
+            //order arts and transform kumisID to map
             let orderedArtsMap = new Map()
             for (let kumi of kumiArr) {
                 let tempOrderdArtsSeq = {}
@@ -464,9 +461,9 @@ export default {
                         tempOrderdArtsSeq[art.position] = art.id
                     }
                 }
-                orderedArtsMap.set(kumi.title, tempOrderdArtsSeq)
+                orderedArtsMap.set(kumi.title, this.artifactObjectToArray(tempOrderdArtsSeq))
             }
-            
+
             return orderedArtsMap
         },
 
@@ -475,28 +472,13 @@ export default {
             //iterate sequenceData
             for (let item of this.sequenceData) {
                 if (artsMap.has(item.name)) {
-                    let art = artsMap.get(item.name)
-                    item.arts = this.artifactObjectToArray(art)
+                    item.arts = artsMap.get(item.name)
                 }
-                item.differ = [false, false, false, false, false]
             }
         },
 
         handleClickCompareWithDirectory(dirId) {
-            let artsMap = this.getArtifactsFromDirectory(dirId)
-            //iterate and compare
-            for (let item of this.sequenceData) {       
-                if (artsMap.has(item.name)) {
-                    let artIdFromMap = this.artifactObjectToArray(artsMap.get(item.name))
-                    let differ = []
-                    for (let i = 0; i < 5; i++) {
-                        differ.push(item.arts[i] !== artIdFromMap[i])
-                    }
-                    item.differ = differ
-                } else {
-                    item.differ = [false, false, false, false, false]
-                }
-            }
+            this.oldDirectoryId = dirId === 'cancel' ? null : dirId
         },
 
         handleClickSaveSequence() {
@@ -511,7 +493,6 @@ export default {
                 name,
                 id: this.genUniqueId(),
                 arts: [-1, -1, -1, -1, -1],
-                differ: [false, false, false, false, false]
             }))
             this.savedSequenceHash = objectHash(this.presetNames)
         },
@@ -704,7 +685,7 @@ export default {
                         background: rgb(255, 255, 255);
                     }
                 }
-                
+
             }
         }
     }
@@ -727,5 +708,9 @@ export default {
 .ghost {
     opacity: 0.5;
     background: #c8ebfb;
+}
+
+.directory-active {
+    color: #66b1ff;
 }
 </style>
