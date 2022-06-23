@@ -55,11 +55,14 @@ export default {
                     const component = vm.$refs["page"]
                     const presetName = vm.$route.params["presetName"]
                     const artifacts = vm.$route.params["artifacts"]
+                    const artifactGroups = vm.$route.params["artifactGroups"]
                     // console.log(component)
                     if (presetName) {
                         component.usePreset(presetName)
                     }
-                    if (artifacts) {
+                    if (artifactGroups) {
+                        component.useArtifactGroups(artifactGroups)
+                    } else if (artifacts) {
                         component.useArtifacts(artifacts)
                     }
                 })

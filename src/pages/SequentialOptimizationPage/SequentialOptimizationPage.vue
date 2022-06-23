@@ -499,13 +499,23 @@ export default {
 
         handleRedirectToCalculator(index) {
             const item = this.sequenceData[index]
-            this.$router.push({
-                name: "calculate",
-                params: {
-                    presetName: item.name,
-                    artifacts: item.arts,
-                }
-            })
+            if (this.oldDirectory.has(item.name)) {
+                this.$router.push({
+                    name: "calculate",
+                    params: {
+                        presetName: item.name,
+                        artifactGroups: [item.arts, this.oldDirectory.get(item.name)]
+                    }
+                })
+            } else {
+                this.$router.push({
+                    name: "calculate",
+                    params: {
+                        presetName: item.name,
+                        artifacts: item.arts,
+                    }
+                })
+            }
         },
 
         handleRemoveArtifact(index, artIndex) {

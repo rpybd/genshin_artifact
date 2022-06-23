@@ -1396,6 +1396,15 @@ export default {
             this.artifactIds = artifacts
         },
 
+        useArtifactGroups(artifactGroups) {
+            this.artifactGroups.unshift(...artifactGroups.map(artIds => ({
+                ...getGroupDefault(),
+                ids: artIds,
+            })))
+            this.currentArtifactGroupName = this.artifactGroups[0].name
+            this.artifactGroups.splice(artifactGroups.length)
+        },
+
         async usePreset(name) {
             const entry = getPresetEntryByName(name)
             const item = deepCopy(entry.item)
