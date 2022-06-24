@@ -122,7 +122,7 @@ export function newKumi(dirId, name) {
 
 export function newKumiWithArtifacts(dirId, name, artifactIds) {
     store.commit("kumi/newKumi", {
-        artifactIds,
+        artifactIds: artifactIds.slice(),
         title: name,
         dirId
     })
